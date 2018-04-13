@@ -20,7 +20,7 @@ version in Global := a8.sbt_a8.versionStamp(file("."))
 
 lazy val codegen =
   Common
-    .jvmProject("a8-codegen", file("codegen"), "codegen")
+    .jvmProject("a8-codegen", file("."), "codegen")
     .settings(
       libraryDependencies ++= Seq(
         "com.lihaoyi" %%% "fastparse" % "0.4.4",
