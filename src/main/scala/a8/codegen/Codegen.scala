@@ -13,17 +13,10 @@ object Codegen {
     def quoted = '\"' + s + '\"'
   }
 
-  val excludedNames =
-    Set(
-      "CaseClassParser.scala",
-      "Codegen.scala"
-    )
-
   def isCodgenFile(f: File): Boolean = {
     if (
       f.isFile
         && f.getName.endsWith(".scala")
-        && !excludedNames.contains(f.getName)
         && !f.getName.startsWith("Mx")
     ) {
       val contents = loadFileContents(f)
