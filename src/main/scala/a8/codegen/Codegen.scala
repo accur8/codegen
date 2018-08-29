@@ -4,6 +4,7 @@ import a8.codegen.CaseClassAst.CaseClass
 import a8.codegen.FastParseTools.{ParserConfig, Source}
 import java.io.File
 import CommonOpsCopy._
+import scala.language.postfixOps
 
 object Codegen {
 
@@ -37,8 +38,47 @@ object Codegen {
     }
   }
 
+  def printHelp(args: Option[Array[String]] = None) = {
+
+    args.map{ a =>
+      println(s"a8-codegen does not support args = ${a.toList}")
+      println("")
+    }
+
+    val help =
+      s"""Accur8 Codegen Tool
+         |
+         |Usage: a8-codegen [] [--help] [--l-help]
+         |
+         |Finds scala files in current directory with @CompanionGen and generates companion case classes
+         |
+         |  --help      shows help for a8-codegen
+         |
+         |  --l-help    shows the options for the app launcher (like how to update the app)
+       """.stripMargin
+    println(help)
+  }
+
   def main(args: Array[String]) = {
 
+    import sys.process._
+
+    args match {
+      case Array() =>
+        codeGenScalaFiles
+      case Array(oneArg) => oneArg match {
+        case "--help" =>
+          printHelp()
+        case "--l-help" =>
+          "a8-codegen --l-help"!
+        case _ => printHelp(Some(args))
+      }
+      case _ => printHelp(Some(args))
+    }
+
+  }
+
+  def codeGenScalaFiles = {
     println("finding scala files with @CompanionGen")
     val files = findCodegenScalaFiles(new File("."))
     println(s"found ${files.size} scala files")
@@ -48,8 +88,8 @@ object Codegen {
         Codegen(file)
           .run()
       )
-
   }
+
 
   def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
     val p = new java.io.PrintWriter(f)
