@@ -59,10 +59,22 @@ class CaseClassParser(implicit config: ParserConfig) {
 //      .log()
 
 
+  val Annotation: P[ast.Annotation] =
+    P(ws ~ "@" ~ Name ~ ws ~ ("(" ~ AnnotationParm.rep ~ ")").?)
+      .map { case (name, parms) =>
+        ast.Annotation(name, parms.getOrElse(Nil))
+      }
+
+  val AnnotationParm: P[ast.AnnotationParm] =
+    P(ws ~ Name ~ ws ~ "=" ~ Atom.!)
+      .map { case (name, value) =>
+        ast.AnnotationParm(name, value)
+      }
+
   val Property =
-    P(ws ~ Name ~ ws ~ ":" ~ ws ~ TypeName ~ ws ~ ("=" ~ ws ~ Expr.!).?)
-      .map { case (name, typeName, defaultValue) =>
-        ast.Property(name, typeName, defaultValue)
+    P(ws ~ Annotation.rep ~ ws ~ Name ~ ws ~ ":" ~ ws ~ TypeName ~ ws ~ ("=" ~ ws ~ Expr.!).?)
+      .map { case (annotations, name, typeName, defaultValue) =>
+        ast.Property(name, typeName, defaultValue, annotations)
       }
 //      .log()
 

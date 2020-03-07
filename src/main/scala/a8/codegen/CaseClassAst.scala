@@ -19,10 +19,21 @@ object CaseClassAst {
     companionGen: CompanionGen,
   )
 
+  case class Annotation(
+    name: String,
+    parms: Iterable[AnnotationParm]
+  )
+
+  case class AnnotationParm(
+    name: String,
+    value: String,
+  )
+
   case class Property(
     name: String,
     typeName: TypeName,
     defaultExpr: Option[String],
+    annotations: Iterable[Annotation],
   ) {
     override def toString =
       name + ": " + typeName + defaultExpr.map(" = " + _).getOrElse("")

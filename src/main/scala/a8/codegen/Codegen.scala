@@ -21,7 +21,7 @@ object Codegen {
         && !f.getName.startsWith("Mx")
     ) {
       val contents = loadFileContents(f)
-      contents.contains("@CompanionGen")
+      contents.exists(_.contains("@CompanionGen"))
     } else {
       false
     }
@@ -96,9 +96,18 @@ object Codegen {
     try { op(p) } finally { p.close() }
   }
 
-  def loadFileContents(f: File): String = {
+  def loadFileContents(f: File): Option[String] = {
     val source = scala.io.Source.fromFile(f)
-    try source.getLines.mkString("\n") finally source.close()
+    try {
+      Some(source.getLines.mkString("\n"))
+    } catch {
+      case e: Exception =>
+        println(s"error processing ${f}")
+        e.printStackTrace()
+        None
+    } finally {
+      source.close()
+    }
   }
 
 }
@@ -138,7 +147,7 @@ case class Codegen(file: java.io.File) {
   lazy val header = s"""package ${sourceFile.pakkage}
 
 import a8.common.Lenser.{Lens, LensImpl}
-import play.api.libs.json.{JsPath, Reads, Writes}
+import play.api.libs.json.{JsPath, Reads, OWrites}
 import play.api.libs.json._
 import play.api.libs.json.Reads._
 import play.api.libs.functional.syntax._
@@ -215,7 +224,7 @@ case class CaseClassGen(caseClass: CaseClass) {
       case 0 =>
         s"""
 implicit val jsonReads: Reads[${cc.name}] = json.emptyObjectReader(${cc.name}())
-implicit val jsonWrites: Writes[${cc.name}] = json.emptyObjectWriter[${cc.name}]
+implicit val jsonWrites: OWrites[${cc.name}] = json.emptyObjectWriter[${cc.name}]
         """
 
       case 1 =>
@@ -223,7 +232,7 @@ implicit val jsonWrites: Writes[${cc.name}] = json.emptyObjectWriter[${cc.name}]
 implicit val jsonReads: Reads[${cc.name}] =
   ${jsonFieldReads}.map(${cc.name}.apply)
 
-implicit val jsonWrites: Writes[${cc.name}] =
+implicit val jsonWrites: OWrites[${cc.name}] =
   ${jsonFieldWrites}.contramap { v => v.${props.head.name} }
         """
 
@@ -233,7 +242,7 @@ implicit val jsonReads: Reads[${cc.name}] = (
 ${jsonFieldReads.indent("  ")}
 )(${cc.name}.apply _)
 
-implicit val jsonWrites: Writes[${cc.name}] = (
+implicit val jsonWrites: OWrites[${cc.name}] = (
 ${jsonFieldWrites.indent("  ")}
 )(unlift(${cc.name}.unapply))
         """
@@ -257,6 +266,8 @@ ${lensesBody.indent("  ")}
 val allLenses = List(${props.map(p => s"lenses.${p.name}").mkString(",")})
 
 val allLensesHList = ${props.toNonEmpty.map(_.map(p => s"lenses.${p.name}").mkString("", " :: ", " :: ")).getOrElse("") + "shapeless.HNil"}
+
+val typeName = "${cc.name}"
 
     """
 
