@@ -78,9 +78,9 @@ object Codegen {
 
   }
 
-  def codeGenScalaFiles = {
+  def codeGenScalaFiles(target: File): Unit = {
     println("finding scala files with @CompanionGen")
-    val files = findCodegenScalaFiles(new File("."))
+    val files = findCodegenScalaFiles(target)
     println(s"found ${files.size} scala files")
 
     files
@@ -90,6 +90,8 @@ object Codegen {
       )
   }
 
+  def codeGenScalaFiles: Unit =
+    codeGenScalaFiles(new File("."))
 
   def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
     val p = new java.io.PrintWriter(f)
@@ -152,6 +154,7 @@ import play.api.libs.json._
 import play.api.libs.json.Reads._
 import play.api.libs.functional.syntax._
 import a8.common.CommonOps._
+import a8.common.JsonAssist
 
 
 /**
@@ -189,16 +192,16 @@ case class CaseClassGen(caseClass: CaseClass) {
 
   import Codegen._
 
-  lazy val cc = caseClass
-  lazy val props = caseClass.properties
+  lazy val cc: CaseClass = caseClass
+  lazy val props: Iterable[CaseClassAst.Property] = caseClass.properties
 
-  lazy val jsonFieldReads =
+  lazy val jsonFieldReads: String =
     props
       .map { prop =>
         val (verb, typeName) =
           if ( prop.typeName.isOption ) "readNullable" -> prop.typeName.args.head
           else "read" -> prop.typeName
-        val readCall =
+        val readCall: String =
           prop
             .defaultExpr
             .map(defaultVal => s"x${verb}WithDefault[${typeName}](${defaultVal})")
@@ -208,7 +211,7 @@ case class CaseClassGen(caseClass: CaseClass) {
       .toList
       .mkString(" and\n")
 
-  lazy val jsonFieldWrites =
+  lazy val jsonFieldWrites: String =
     props
       .map { prop =>
         val (verb, typeName) =
@@ -219,39 +222,45 @@ case class CaseClassGen(caseClass: CaseClass) {
       .toList
       .mkString(" and\n")
 
-  lazy val jsonReadsWritesBody =
+  lazy val jsonReadsWritesBody: String =
     props.size match {
       case 0 =>
         s"""
-implicit val jsonReads: Reads[${cc.name}] = json.emptyObjectReader(${cc.name}())
-implicit val jsonWrites: OWrites[${cc.name}] = json.emptyObjectWriter[${cc.name}]
+implicit lazy val jsonReads: Reads[${cc.name}] = JsonAssist.utils.lazyReads(json.emptyObjectReader(${cc.name}()))
+implicit lazy val jsonWrites: OWrites[${cc.name}] = JsonAssist.utils.lazyReads(json.emptyObjectWriter[${cc.name}])
         """
 
       case 1 =>
         s"""
-implicit val jsonReads: Reads[${cc.name}] =
-  ${jsonFieldReads}.map(${cc.name}.apply)
+implicit lazy val jsonReads: Reads[${cc.name}] =
+  JsonAssist.utils.lazyReads(
+    ${jsonFieldReads}.map(${cc.name}.apply)
+  )
 
-implicit val jsonWrites: OWrites[${cc.name}] =
-  ${jsonFieldWrites}.contramap { v => v.${props.head.name} }
+implicit lazy val jsonWrites: OWrites[${cc.name}] =
+  JsonAssist.utils.lazyOWrites(
+    ${jsonFieldWrites}.contramap { v => v.${props.head.name} }
+  )
         """
 
       case _ =>
         s"""
-implicit val jsonReads: Reads[${cc.name}] = (
-${jsonFieldReads.indent("  ")}
-)(${cc.name}.apply _)
+implicit lazy val jsonReads: Reads[${cc.name}] =
+  JsonAssist.utils.lazyReads((
+${jsonFieldReads.indent("    ")}
+  )(${cc.name}.apply _))
 
-implicit val jsonWrites: OWrites[${cc.name}] = (
-${jsonFieldWrites.indent("  ")}
-)(unlift(${cc.name}.unapply))
+implicit lazy val jsonWrites: OWrites[${cc.name}] =
+  JsonAssist.utils.lazyOWrites((
+${jsonFieldWrites.indent("    ")}
+  )(unlift(${cc.name}.unapply)))
         """
     }
 
-  lazy val lensesBody =
+  lazy val lensesBody: String =
     props
       .map { prop =>
-        s"val ${prop.name}: Lens[${cc.name},${prop.typeName}] = LensImpl[${cc.name},${prop.typeName}](${prop.name.quoted}, _.${prop.name}, (d,v) => d.copy(${prop.name} = v))"
+        s"lazy val ${prop.name}: Lens[${cc.name},${prop.typeName}] = LensImpl[${cc.name},${prop.typeName}](${prop.name.quoted}, _.${prop.name}, (d,v) => d.copy(${prop.name} = v))"
       }
       .mkString("\n")
 
@@ -259,17 +268,19 @@ ${jsonFieldWrites.indent("  ")}
 
 ${jsonReadsWritesBody.trim}
 
+lazy val jsonFormat = JsonAssist.utils.lazyFormat(Format(jsonReads, jsonWrites))
+
 object lenses {
 ${lensesBody.indent("  ")}
 }
 
-val allLenses = List(${props.map(p => s"lenses.${p.name}").mkString(",")})
+lazy val allLenses = List(${props.map(p => s"lenses.${p.name}").mkString(",")})
 
-val allLensesHList = ${props.toNonEmpty.map(_.map(p => s"lenses.${p.name}").mkString("", " :: ", " :: ")).getOrElse("") + "shapeless.HNil"}
+lazy val allLensesHList = ${props.toNonEmpty.map(_.map(p => s"lenses.${p.name}").mkString("", " :: ", " :: ")).getOrElse("") + "shapeless.HNil"}
 
-val typeName = "${cc.name}"
+lazy val typeName = "${cc.name}"
 
-    """
+"""
 
   lazy val body = s"""
 trait Mx${cc.name} {
@@ -277,6 +288,6 @@ trait Mx${cc.name} {
 ${bareBody.trim.indent("  ")}
 
 }
-    """
+"""
 
   }
