@@ -4,20 +4,7 @@
 // 
 // This file is generated from modules.conf using `a8-versions build_dot_sbt`
 // 
-<<<<<<< HEAD
-// It was generated at 2020-09-22 10:25:34.482 -0400 by flow on Flow-9.local
-// 
-// a8-versions build/versioning info follows
-// 
-//        build_java_version : 1.8.0_265
-//        build_os : Linux
-//        build_machine_ip : 127.0.0.1
-//        build_user : dev
-//        build_date : Wed Aug 26 15:29:40 EDT 2020
-//        version_number : 1.0.0-20200826_1529_master
-//        build_machine : basil
-=======
-// It was generated at 2020-10-31 07:34:07.391 -0400 by glen on mini
+// It was generated at 2020-11-04 13:46:48.189 -0500 by glen on mini
 // 
 // a8-versions build/versioning info follows
 // 
@@ -28,35 +15,19 @@
 //        build_date : Thu Oct 22 11:18:48 EDT 2020
 //        version_number : 1.0.0-20201022_1118_master
 //        build_machine : Flow-9.local
->>>>>>> added RpcHandler support
 //        project_name : a8-versions
 // 
 //      
 
-<<<<<<< HEAD
 val scalaLibVersion = "2.12.12"
-=======
-val scalaLibVersion = "2.12.5"
->>>>>>> added RpcHandler support
 
 scalacOptions in Global ++= Seq("-deprecation", "-unchecked", "-feature")
 
 resolvers in Global += "a8-repo" at Common.readRepoUrl()
 
-<<<<<<< HEAD
-publishTo in Global := Some("a8-repo-releases" at "s3://s3-us-east-1.amazonaws.com/a8-artifacts/releases")
-
-s3CredentialsProvider in Global := { (bucket: String) =>
-  import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials}
-  new AWSStaticCredentialsProvider(new BasicAWSCredentials(Common.readRepoProperty("publish_aws_access_key"), Common.readRepoProperty("publish_aws_secret_key")))
-}
-
-scalaVersion in Global := "2.12.12"
-=======
 publishTo in Global := Some("a8-repo-releases" at Common.readRepoUrl())
 
 scalaVersion in Global := scalaLibVersion
->>>>>>> added RpcHandler support
 
 organization in Global := "a8"
 

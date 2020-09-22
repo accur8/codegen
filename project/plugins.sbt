@@ -4,20 +4,7 @@
 // 
 // This file is generated from modules.conf using `a8-versions build_dot_sbt`
 // 
-<<<<<<< HEAD
-// It was generated at 2020-09-22 10:25:34.902 -0400 by flow on Flow-9.local
-// 
-// a8-versions build/versioning info follows
-// 
-//        build_java_version : 1.8.0_265
-//        build_os : Linux
-//        build_machine_ip : 127.0.0.1
-//        build_user : dev
-//        build_date : Wed Aug 26 15:29:40 EDT 2020
-//        version_number : 1.0.0-20200826_1529_master
-//        build_machine : basil
-=======
-// It was generated at 2020-10-31 07:34:07.690 -0400 by glen on mini
+// It was generated at 2020-11-04 13:46:48.569 -0500 by glen on mini
 // 
 // a8-versions build/versioning info follows
 // 
@@ -28,76 +15,10 @@
 //        build_date : Thu Oct 22 11:18:48 EDT 2020
 //        version_number : 1.0.0-20201022_1118_master
 //        build_machine : Flow-9.local
->>>>>>> added RpcHandler support
 //        project_name : a8-versions
 // 
 //      
 
-<<<<<<< HEAD
-addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "0.6.1")
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.33")
-//addSbtPlugin("io.get-coursier" % "sbt-coursier" % "2.0.0-RC6")
-//addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.9.0")
-
-addSbtPlugin("com.frugalmechanic" % "fm-sbt-s3-resolver" % "0.19.0")
-
-resolvers += "a8-sbt-plugins" at readRepoUrl()
-credentials += readRepoCredentials()
-
-//libraryDependencies += "org.slf4j" % "slf4j-nop" % "1.7.21"
-//addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.9.3")
-
-addSbtPlugin("a8" % "sbt-a8" % "1.1.0-20191220_1208")
-
-addSbtPlugin("ch.epfl.scala" % "sbt-bloop" % "1.0.0-M10")
-
-// This plugin can be removed when using Scala 2.13.0 or above
-addSbtPlugin("org.lyranthe.sbt" % "partial-unification" % "1.1.2")
-
-
-
-
-  def readRepoUrl() = readRepoProperty("repo_url")
-
-  lazy val repoConfigFile = new java.io.File(System.getProperty("user.home") + "/.a8/repo.properties")
-
-  lazy val repoProperties = {
-    import scala.collection.JavaConverters._
-    val props = new java.util.Properties()
-    if ( repoConfigFile.exists() ) {
-      val input = new java.io.FileInputStream(repoConfigFile)
-      try {
-        props.load(input)
-      } finally {
-        input.close()
-      }
-      props.asScala
-    } else {
-      sys.error("config file " + repoConfigFile + " does not exist")
-    }
-  }
-
-  def readRepoProperty(propertyName: String): String = {
-    repoProperties.get(propertyName) match {
-      case Some(s) =>
-        s
-      case None =>
-        sys.error("could not find property " + propertyName + " in " + repoConfigFile)
-    }
-  }
-
-  def readRepoCredentials(): Credentials = {
-    val repoUrl = new java.net.URL(readRepoUrl())
-    Credentials(
-      readRepoProperty("repo_realm"),
-      repoUrl.getHost,
-      readRepoProperty("repo_user"),
-      readRepoProperty("repo_password"),
-    )
-  }
-
-
-=======
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.2.0")
 addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "1.0.0")
 //addSbtPlugin("io.get-coursier" % "sbt-coursier" % "2.0.0-RC6")
@@ -159,6 +80,5 @@ addSbtPlugin("org.lyranthe.sbt" % "partial-unification" % "1.1.2")
   }
 
 
->>>>>>> added RpcHandler support
   
 
