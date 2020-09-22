@@ -227,7 +227,7 @@ case class CaseClassGen(caseClass: CaseClass) {
       case 0 =>
         s"""
 implicit lazy val jsonReads: Reads[${cc.name}] = JsonAssist.utils.lazyReads(json.emptyObjectReader(${cc.name}()))
-implicit lazy val jsonWrites: OWrites[${cc.name}] = JsonAssist.utils.lazyReads(json.emptyObjectWriter[${cc.name}])
+implicit lazy val jsonWrites: OWrites[${cc.name}] = JsonAssist.utils.lazyOWrites(json.emptyObjectWriter[${cc.name}])
         """
 
       case 1 =>
