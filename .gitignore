@@ -1,4 +1,7 @@
 /target
 /project/target
 /project/project
-/.idea
+/.idea.bloop
+out
+.idea
+.bloop

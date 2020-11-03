@@ -39,8 +39,32 @@ class CaseClassParser(implicit config: ParserConfig) {
 //      .log()
 
   val CompanionGen: P[a8.codegen.CompanionGen] =
-    P(k0("@CompanionGen") ~ ws ~ ("(" ~ ws ~ (k0("writeNones") ~ ws ~ "=" ~ ws ~ TrueFalse).? ~ ws ~ ")").?)
-      .map(o => a8.codegen.CompanionGen(writeNones = o.flatten.getOrElse(false)))
+    P(k0("@CompanionGen") ~ ws ~ ("(" ~ ws ~ CompanionGenParms ~ ws ~ ")").?)
+      .map(parms =>
+        parms
+          .toSeq
+          .flatten
+          .foldLeft(a8.codegen.CompanionGen()) { case (cg, (name, value)) =>
+            name match {
+              case "writeNones" =>
+                cg.copy(writeNones = value)
+              case "jsonFormat" =>
+                cg.copy(jsonFormat = value)
+              case "rpcHandler" =>
+                cg.copy(rpcHandler = value)
+              case _ =>
+                println(s"warning ignoring @CompanionGen value ${name} = ${value}")
+                cg
+            }
+          }
+
+      )
+
+  val CompanionGenParms: P[Seq[(String,Boolean)]] =
+    P(CompanionGenParm.rep(sep = Comma))
+
+  val CompanionGenParm: P[(String,Boolean)] =
+    P(Name ~ ws ~ "=" ~ ws ~ TrueFalse)
 
   val TrueFalse: P[Boolean] = P(k0("true").map(_ => true) | k0("false").map(_ => false))
 

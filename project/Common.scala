@@ -3,6 +3,7 @@
 // 
 // This file is generated from modules.conf using `a8-versions build_dot_sbt`
 // 
+<<<<<<< HEAD
 // It was generated at 2020-09-22 10:25:34.903 -0400 by flow on Flow-9.local
 // 
 // a8-versions build/versioning info follows
@@ -14,6 +15,19 @@
 //        build_date : Wed Aug 26 15:29:40 EDT 2020
 //        version_number : 1.0.0-20200826_1529_master
 //        build_machine : basil
+=======
+// It was generated at 2020-10-31 07:33:36.743 -0400 by glen on mini
+// 
+// a8-versions build/versioning info follows
+// 
+//        build_java_version : 1.8.0_111
+//        build_os : Mac OS X
+//        build_machine_ip : 127.0.0.1
+//        build_user : flow
+//        build_date : Thu Oct 22 11:18:48 EDT 2020
+//        version_number : 1.0.0-20201022_1118_master
+//        build_machine : Flow-9.local
+>>>>>>> added RpcHandler support
 //        project_name : a8-versions
 // 
 //      
@@ -21,11 +35,10 @@
 import sbt._
 import Keys._
 import org.scalajs.sbtplugin.ScalaJSPlugin
-import org.scalajs.sbtplugin.ScalaJSPlugin.AutoImport.fastOptJS
-import sbtcrossproject.CrossPlugin.autoImport._
+import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.fastOptJS
 import sbtcrossproject.JVMPlatform
 import scalajscrossproject.JSPlatform
-import scalajscrossproject.ScalaJSCrossPlugin.autoImport._
+import sbtcrossproject.CrossType
 
 object Common extends a8.sbt_a8.SharedSettings with a8.sbt_a8.HaxeSettings with a8.sbt_a8.SassSettings with a8.sbt_a8.dobby.DobbySettings {
 
@@ -34,8 +47,8 @@ object Common extends a8.sbt_a8.SharedSettings with a8.sbt_a8.HaxeSettings with 
       .crossType(CrossType.Full)
       .settings(settings: _*)
       .settings(Keys.name := artifactName)
-      .jsSettings(jsSettings: _*)
-      .jvmSettings(jvmSettings: _*)
+      .platformsSettings(JSPlatform)(jsSettings: _*)
+      .platformsSettings(JVMPlatform)(jvmSettings: _*)
 
 
   def jsProject(artifactName: String, dir: java.io.File, id: String) =
