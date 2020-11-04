@@ -4,7 +4,7 @@
 // 
 // This file is generated from modules.conf using `a8-versions build_dot_sbt`
 // 
-// It was generated at 2020-11-04 13:46:48.569 -0500 by glen on mini
+// It was generated at 2020-11-04 13:46:59.160 -0500 by glen on mini
 // 
 // a8-versions build/versioning info follows
 // 
