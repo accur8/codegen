@@ -28,6 +28,7 @@ object Codegen {
   }
 
   def findCodegenScalaFiles(dir: File): IndexedSeq[File] = {
+    println(s"finding scala files in ${dir.getCanonicalPath}")
     dir.listFiles.flatMap {
       case d if d.isDirectory =>
         findCodegenScalaFiles(d)
@@ -65,7 +66,7 @@ object Codegen {
 
     args match {
       case Array() =>
-        codeGenScalaFiles(new File("/Users/glen/code/accur8/odin/remoteapi"))
+        codeGenScalaFiles(new File("."))
       case Array(oneArg) => oneArg match {
         case "--help" =>
           printHelp()
@@ -281,7 +282,7 @@ implicit val rpcHandler: a8.remoteapi.RpcHandler[${cc.name}] = {
   import a8.remoteapi.RpcHandler.RpcParm
   a8.remoteapi.RpcHandler(
     Vector(
-${props.map(prop => s"RpcParm(parameters.${prop.name})").mkString(",\n").indent("      ")}
+${props.map(prop => s"RpcParm(parameters.${prop.name})").mkString(",\n").indent("        ")}
     ),
     unsafe.rawConstruct,
   )
@@ -303,6 +304,18 @@ ${
         .mkString("\n")
         .indent("    ")
 }
+    )
+  }
+  def typedConstruct(${props.map(p => s"${p.name}: ${p.typeName}").mkString(", ")}): ${cc.name} = {
+    ${cc.name}(
+${
+      props
+        .zipWithIndex.map { case (prop,i) =>
+        s"${prop.name} = values(${i}).asInstanceOf[${prop.typeName}],"
+      }
+        .mkString("\n")
+        .indent("    ")
+    }
     )
   }
 }
