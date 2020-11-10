@@ -10,7 +10,7 @@ object Codegen {
 
   implicit class StringOps(s: String) {
     def indent(indent: String) =
-      s.lines.map(indent + _).mkString("\n")
+      s.linesIterator.map(indent + _).mkString("\n")
     def quoted = '\"' + s + '\"'
   }
 
@@ -28,7 +28,6 @@ object Codegen {
   }
 
   def findCodegenScalaFiles(dir: File): IndexedSeq[File] = {
-    println(s"finding scala files in ${dir.getCanonicalPath}")
     dir.listFiles.flatMap {
       case d if d.isDirectory =>
         findCodegenScalaFiles(d)
@@ -82,7 +81,7 @@ object Codegen {
   }
 
   def codeGenScalaFiles(target: File): Unit = {
-    println("finding scala files with @CompanionGen")
+    println(s"finding scala files with @CompanionGen in ${target.getAbsolutePath}")
     val files = findCodegenScalaFiles(target)
     println(s"found ${files.size} scala files")
 
@@ -126,7 +125,7 @@ case class Codegen(file: java.io.File) {
 
   val manualImports =
     previousGeneratedSourceCode
-      .lines
+      .linesIterator
       .toList
       .dropWhile(!_.startsWith("//===="))
       .drop(1)
@@ -306,18 +305,9 @@ ${
 }
     )
   }
-  def typedConstruct(${props.map(p => s"${p.name}: ${p.typeName}").mkString(", ")}): ${cc.name} = {
-    ${cc.name}(
-${
-      props
-        .zipWithIndex.map { case (prop,i) =>
-        s"${prop.name} = values(${i}).asInstanceOf[${prop.typeName}],"
-      }
-        .mkString("\n")
-        .indent("    ")
-    }
-    )
-  }
+  def typedConstruct(${props.map(p => s"${p.name}: ${p.typeName}").mkString(", ")}): ${cc.name} =
+    ${cc.name}(${props.map(_.name).mkString(", ")})
+
 }
 """
 
