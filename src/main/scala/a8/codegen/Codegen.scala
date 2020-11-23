@@ -181,10 +181,10 @@ ${manualImports.mkString("\n")}
     val generatedFile = new java.io.File(file.getParentFile, "Mx" + file.getName)
     println(s"writing ${generatedFile}")
     Codegen.printToFile(generatedFile) { out =>
-      out.write(header)
-      out.write(s"object ${objectName} {")
-      out.write(generatedCaseClassCode.indent("  "))
-      out.write("}")
+      out.println(header)
+      out.println(s"object ${objectName} {")
+      out.println(generatedCaseClassCode.indent("  "))
+      out.println("}")
     }
   }
 
