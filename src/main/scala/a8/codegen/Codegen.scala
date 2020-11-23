@@ -177,11 +177,14 @@ ${manualImports.mkString("\n")}
 
   def run(): Unit = {
     println(s"reading ${file}")
+    val objectName: String = "Mx" + file.getName.split("\\.").take(1).head
     val generatedFile = new java.io.File(file.getParentFile, "Mx" + file.getName)
     println(s"writing ${generatedFile}")
     Codegen.printToFile(generatedFile) { out =>
       out.write(header)
-      out.write(generatedCaseClassCode)
+      out.write(s"object ${objectName} {")
+      out.write(generatedCaseClassCode.indent("  "))
+      out.write("}")
     }
   }
 
@@ -301,7 +304,7 @@ ${
           s"${prop.name} = values(${i}).asInstanceOf[${prop.typeName}],"
         }
         .mkString("\n")
-        .indent("    ")
+        .indent("      ")
 }
     )
   }

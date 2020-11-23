@@ -74,7 +74,7 @@ ${f.extra.traced.trace}
       val (line,rowIndex) =
         input
           .slice(0, index)
-          .lines
+          .linesIterator
           .zipWithIndex
           .reduce((_,r) => r)
       (rowIndex+1) -> line.length

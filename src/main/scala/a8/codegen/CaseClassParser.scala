@@ -1,10 +1,10 @@
 package a8.codegen
 
+
 import a8.codegen.FastParseTools.ParserConfig
 import a8.codegen.CaseClassAst.Import
 import a8.codegen.{CaseClassAst => ast, FastParseTools => fpt}
 import fastparse.all._
-
 
 class CaseClassParser(implicit config: ParserConfig) {
 
@@ -84,16 +84,18 @@ class CaseClassParser(implicit config: ParserConfig) {
 
 
   val Annotation: P[ast.Annotation] =
-    P(ws ~ "@" ~ Name ~ ws ~ ("(" ~ AnnotationParm.rep ~ ")").?)
+    P(ws ~ "@" ~ Name ~ ws ~ ("(" ~ AnnotationParm.rep(sep = Comma) ~ ")").?)
       .map { case (name, parms) =>
         ast.Annotation(name, parms.getOrElse(Nil))
       }
+//      .log()
 
   val AnnotationParm: P[ast.AnnotationParm] =
-    P(ws ~ Name ~ ws ~ "=" ~ Atom.!)
+    P(ws ~ Name ~ ws ~ "=" ~ ws ~ Atom.!)
       .map { case (name, value) =>
         ast.AnnotationParm(name, value)
       }
+//      .log()
 
   val Property =
     P(ws ~ Annotation.rep ~ ws ~ Name ~ ws ~ ":" ~ ws ~ TypeName ~ ws ~ ("=" ~ ws ~ Expr.!).?)
@@ -108,10 +110,24 @@ class CaseClassParser(implicit config: ParserConfig) {
   val Atom: P0 =
     P(
       Number
+      | Bool
+      | TripleQuoted.String
       | StringLit
-      | ("(" ~ ws ~ Expr ~ ws ~ ")")
-      | (Name.rep(sep=Dot) ~ FunctionSuffix.?).map( _ => () )
+      | (k0("new") ~ Name.rep(sep=Dot))
+      | Parens
+      | FunctionCall
     )
+      .map(_ => ())
+//      .log()
+
+  val Bool: P0 =
+    P(k0("true") | k0("false"))
+
+  val Parens: P0 =
+    P("(" ~ ws ~ Expr ~ ws ~ ")").map( _ => () )
+
+  val FunctionCall: P0 =
+    P(Name.rep(sep=Dot) ~ FunctionSuffix.?).map( _ => () )
 
   val FunctionSuffix: P0 =
     P( "(" ~ ws ~ Expr.rep(sep=Comma) ~ ws ~ ")" )
@@ -126,6 +142,7 @@ class CaseClassParser(implicit config: ParserConfig) {
 
   val Name: P[String] =
     P( (!Keyword) ~ (IdentFirstChar ~ IdentSecondChar.rep).! ~ ws )
+//      .log()
 
   val IdentFirstChar =
     P( CharsWhile(ch => ch.isLetter || ch == '_' ) )
@@ -133,10 +150,45 @@ class CaseClassParser(implicit config: ParserConfig) {
   val IdentSecondChar =
     P( CharsWhile(ch => ch.isLetter || ch == '.' || ch == '$' || ch == '#' || ch == '_' || ch.isDigit) )
 
+
+
+
+  object TripleQuoted {
+    val TQ =
+      P( "\"\"\"" )
+//        .log()
+
+    /**
+     * Helper to quickly gobble up large chunks of un-interesting
+     * characters. We break out conservatively, even if we don't know
+     * it's a "real" escape sequence: worst come to worst it turns out
+     * to be a dud and we go back into a CharsChunk next rep
+     */
+    val StringChars = P( CharsWhile(c => c != '\n' && c != '"' && c != '\\' && c != '$') )
+    val NonTripleQuoteChar = P( "\"" ~ "\"".? ~ !"\"" | CharIn("\\\\$\n") )
+
+    val TripleChars =
+      P( (StringChars | NonTripleQuoteChar).rep )
+//        .log()
+
+    val TripleTail =
+      P( TQ ~ "\"".rep )
+//        .log()
+
+    val String =
+      P(
+        TQ ~/ TripleChars ~ TripleTail
+      )
+//        .log()
+  }
+
   val Keyword =
     P(
       k0("case")
       | k0("class")
+      | k0("false")
+      | k0("new")
+      | k0("true")
       | k0("type")
       | k0("import")
     )
