@@ -20,8 +20,10 @@ object Codegen {
         && f.getName.endsWith(".scala")
         && !f.getName.startsWith("Mx")
     ) {
-      val contents = loadFileContents(f)
-      contents.exists(_.contains("@CompanionGen"))
+      loadFileContents(f)
+        .exists { contents =>
+          contents.contains("@CompanionGen") && !contents.contains("//@NoCodegen")
+        }
     } else {
       false
     }
@@ -273,7 +275,7 @@ ${jsonFieldWrites.indent("    ")}
     props
       .zipWithIndex
       .map { case (prop, ordinal) =>
-        s"lazy val ${prop.name}: CaseClassParm[${cc.name},${prop.typeName}] = CaseClassParm[${cc.name},${prop.typeName}](${prop.name.quoted}, lenses.${prop.name}, ${prop.defaultExpr.map("()=>" + _)}, ${ordinal})"
+        s"lazy val ${prop.name}: CaseClassParm[${cc.name},${prop.typeName}] = CaseClassParm[${cc.name},${prop.typeName}](${prop.name.quoted}, lenses.${prop.name}, ${prop.defaultExpr.map("()=> " + _)}, ${ordinal})"
       }
       .mkString("\n")
 
