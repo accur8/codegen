@@ -273,7 +273,7 @@ ${jsonFieldWrites.indent("    ")}
     props
       .zipWithIndex
       .map { case (prop, ordinal) =>
-        s"lazy val ${prop.name}: CaseClassParm[${cc.name},${prop.typeName}] = CaseClassParm[${cc.name},${prop.typeName}](${prop.name.quoted}, lenses.${prop.name}, ${prop.defaultExpr}, ${ordinal})"
+        s"lazy val ${prop.name}: CaseClassParm[${cc.name},${prop.typeName}] = CaseClassParm[${cc.name},${prop.typeName}](${prop.name.quoted}, lenses.${prop.name}, ${prop.defaultExpr.map("()=>" + _)}, ${ordinal})"
       }
       .mkString("\n")
 
