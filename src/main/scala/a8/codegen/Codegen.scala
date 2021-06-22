@@ -50,7 +50,7 @@ object Codegen {
     val help =
       s"""Accur8 Codegen Tool
          |
-         |Usage: a8-codegen [] [--help] [--l-help]
+         |Usage: a8-codegen [--help] [--l-help] [template2]
          |
          |Finds scala files in current directory with @CompanionGen and generates companion case classes
          |
