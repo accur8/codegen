@@ -54,6 +54,8 @@ object Codegen {
          |
          |Finds scala files in current directory with @CompanionGen and generates companion case classes
          |
+         |  templateName
+         |
          |  --help      shows help for a8-codegen
          |
          |  --l-help    shows the options for the app launcher (like how to update the app)
@@ -66,8 +68,10 @@ object Codegen {
     import sys.process._
 
     args match {
-      case Array() =>
+      case Array("") =>
         codeGenScalaFiles(new File("."))
+      case Array("template2") =>
+        CodegenTemplate2.codeGenScalaFiles(new File("."))
       case Array(oneArg) => oneArg match {
         case "--help" =>
           printHelp()
@@ -152,7 +156,7 @@ case class Codegen(file: java.io.File) {
 
   lazy val header = s"""package ${sourceFile.pakkage}
 
-import a8.common.Lenser.{Lens, LensImpl}
+import a8.common.Lenser.{Lens, LensImpl}Lenser.{Lens, LensImpl}
 import play.api.libs.json.{JsPath, Reads, OWrites}
 import play.api.libs.json._
 import play.api.libs.json.Reads._
@@ -279,6 +283,14 @@ ${jsonFieldWrites.indent("    ")}
       }
       .mkString("\n")
 
+  lazy val parametersBodyTemplate2: String =
+    props
+      .zipWithIndex
+      .map { case (prop, ordinal) =>
+        s"lazy val ${prop.name}: CaseClassParm[${cc.name},${prop.typeName}] = CaseClassParm[${cc.name},${prop.typeName}](${prop.name.quoted}, _.${prop.name}, (d,v) => d.copy(${prop.name} = v), ${prop.defaultExpr.map("()=> " + _)}, ${ordinal})"
+      }
+      .mkString("\n")
+
   lazy val rpcHandlerBody: String =
     if ( caseClass.companionGen.rpcHandler )
 s"""
@@ -304,6 +316,18 @@ ${
       props
         .zipWithIndex.map { case (prop,i) =>
           s"${prop.name} = values(${i}).asInstanceOf[${prop.typeName}],"
+        }
+        .mkString("\n")
+        .indent("      ")
+}
+    )
+  }
+  def iterRawConstruct(values: Iterator[Any]): ${cc.name} = {
+    ${cc.name}(
+${
+      props
+        .zipWithIndex.map { case (prop,i) =>
+          s"${prop.name} = values.next().asInstanceOf[${prop.typeName}],"
         }
         .mkString("\n")
         .indent("      ")
@@ -355,4 +379,29 @@ ${bareBody.trim.indent("  ")}
 }
 """
 
-  }
+  lazy val bareBodyTemplate2 = s"""
+
+lazy val generator: Generator[${cc.name},parameters.type] =
+  Generator(unsafe.iterRawConstruct, parameters)
+
+object parameters {
+${parametersBodyTemplate2.indent("  ")}
+}
+${rpcHandlerBody}
+${unsafeBody}
+
+lazy val allParametersHList = ${props.toNonEmpty.map(_.map(p => s"parameters.${p.name}").mkString("", " :: ", " :: ")).getOrElse("") + "shapeless.HNil"}
+
+lazy val typeName = "${cc.name}"
+
+"""
+
+  lazy val bodyTemplate2 = s"""
+trait Mx${cc.name} {
+
+${bareBodyTemplate2.trim.indent("  ")}
+
+}
+"""
+
+}

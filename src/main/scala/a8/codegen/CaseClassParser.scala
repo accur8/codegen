@@ -76,7 +76,7 @@ class CaseClassParser(implicit config: ParserConfig) {
 
 
   val CaseClass: P[ast.CaseClass] =
-    P(Token.rep ~ ws ~ CompanionGen ~/ ws ~ k0("case") ~ ws ~ k0("class") ~ ws ~ Name ~ ws ~ "(" ~ ws ~/ Property.rep(sep=Comma) ~ Comma.? ~ ws ~ ")" )
+    P(Token.rep ~ ws ~ CompanionGen ~/ ws ~ k0("case") ~ ws ~ k0("class") ~ ws ~ Name ~ ws ~ "(" ~ ws ~/ Property.rep(sep=Comma) ~ Comma.? ~ ws ~ ")" ~ ws )
       .map { case (companionGen,name, props) =>
         ast.CaseClass(name, props, companionGen)
       }
