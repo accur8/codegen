@@ -46,6 +46,7 @@ lazy val codegen =
     .settings(
       libraryDependencies ++= Seq(
         "com.lihaoyi" %% "fastparse" % "0.4.4",
+        "org.json4s" %% "json4s-native-core" % "4.0.0",
       )
     )
 

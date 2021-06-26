@@ -13,7 +13,8 @@ object CaseClassAst {
     name: String
   )
 
-  case class CaseClass(
+  case class
+  ASFSAFSADFCaseClass(
     name: String,
     properties: Iterable[Property],
     companionGen: CompanionGen,

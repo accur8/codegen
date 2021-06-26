@@ -2,8 +2,11 @@ package a8.codegen
 
 import a8.codegen.CaseClassAst.CaseClass
 import a8.codegen.FastParseTools.{ParserConfig, Source}
+
 import java.io.File
 import CommonOpsCopy._
+import a8.codegen.CompanionGen.CompanionGenResolver
+
 import scala.language.postfixOps
 
 object CodegenTemplate2 {
@@ -42,6 +45,7 @@ object CodegenTemplate2 {
 
   def main(args: Array[String]): Unit = {
     codeGenScalaFiles(new File("/Users/glen/code/accur8/composite/wsjdbc"))
+    codeGenScalaFiles(new File("/Users/glen/code/accur8/composite/sync/ahs"))
 //    codeGenScalaFiles(new File("."))
   }
 
@@ -50,9 +54,11 @@ object CodegenTemplate2 {
     val files = findCodegenScalaFiles(target)
     println(s"found ${files.size} scala files")
 
+    val companionGenResolver = CompanionGen.resolver(target)
+
     files
       .foreach( file =>
-        CodegenTemplate2(file)
+        CodegenTemplate2(file, companionGenResolver)
           .run()
       )
   }
@@ -84,7 +90,7 @@ object CodegenTemplate2 {
 
 
 
-case class CodegenTemplate2(file: java.io.File) {
+case class CodegenTemplate2(file: java.io.File, companionGenResolver: CompanionGenResolver) {
 
   import Codegen._
 
@@ -96,7 +102,7 @@ case class CodegenTemplate2(file: java.io.File) {
       .drop(1)
       .takeWhile(!_.startsWith("//===="))
 
-  lazy val parser = new CaseClassParser()(ParserConfig(true))
+  lazy val parser = new CaseClassParser(file, companionGenResolver)(ParserConfig(true))
 
   lazy val previousGeneratedSourceCode =
     if ( generatedFile.exists() )
@@ -115,7 +121,7 @@ case class CodegenTemplate2(file: java.io.File) {
 
   lazy val header = s"""package ${sourceFile.pakkage}
 
-import a8.wsjdbc.codec.Meta.{CaseClassParm, Generator}
+import a8.shared.Meta.{CaseClassParm, Generator, Constructors}
 
 /**
 

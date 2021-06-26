@@ -3,11 +3,11 @@ package a8.codegen
 
 import a8.codegen.FastParseTools.ParserConfig
 import a8.codegen.CaseClassAst.Import
+import a8.codegen.CompanionGen.CompanionGenResolver
 import a8.codegen.{CaseClassAst => ast, FastParseTools => fpt}
 import fastparse.all._
 
-class CaseClassParser(implicit config: ParserConfig) {
-
+class CaseClassParser(file: java.io.File, companionGenResolver: CompanionGenResolver)(implicit config: ParserConfig) {
 
   val comment: P[Unit] =
     P( "//" ~ CharsWhile(_ != '\n') )
@@ -38,20 +38,25 @@ class CaseClassParser(implicit config: ParserConfig) {
     P(ws ~ !CompanionGen ~ CharsWhile(!_.isWhitespace) ~ ws)
 //      .log()
 
-  val CompanionGen: P[a8.codegen.CompanionGen] =
+  val CompanionGen: P[a8.codegen.CompanionGen.Annotations] =
     P(k0("@CompanionGen") ~ ws ~ ("(" ~ ws ~ CompanionGenParms ~ ws ~ ")").?)
       .map(parms =>
         parms
           .toSeq
           .flatten
-          .foldLeft(a8.codegen.CompanionGen()) { case (cg, (name, value)) =>
+          .foldLeft(a8.codegen.CompanionGen.Annotations()) { case (cg, (name, value)) =>
+            val valueOpt = Some(value)
             name match {
               case "writeNones" =>
-                cg.copy(writeNones = value)
+                cg.copy(writeNones = valueOpt)
               case "jsonFormat" =>
-                cg.copy(jsonFormat = value)
+                cg.copy(jsonFormat = valueOpt)
               case "rpcHandler" =>
-                cg.copy(rpcHandler = value)
+                cg.copy(rpcHandler = valueOpt)
+              case "messagePack" =>
+                cg.copy(messagePack = valueOpt)
+              case "rowReader" =>
+                cg.copy(rowReader = valueOpt)
               case _ =>
                 println(s"warning ignoring @CompanionGen value ${name} = ${value}")
                 cg
@@ -77,8 +82,9 @@ class CaseClassParser(implicit config: ParserConfig) {
 
   val CaseClass: P[ast.CaseClass] =
     P(Token.rep ~ ws ~ CompanionGen ~/ ws ~ k0("case") ~ ws ~ k0("class") ~ ws ~ Name ~ ws ~ "(" ~ ws ~/ Property.rep(sep=Comma) ~ Comma.? ~ ws ~ ")" ~ ws )
-      .map { case (companionGen,name, props) =>
-        ast.CaseClass(name, props, companionGen)
+      .map { case (companionGen, name, props) =>
+        ast.CaseClass(name, props, companionGenResolver.resolve(name, file, companionGen))
+
       }
 //      .log()
 

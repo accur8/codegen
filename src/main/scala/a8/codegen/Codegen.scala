@@ -2,8 +2,11 @@ package a8.codegen
 
 import a8.codegen.CaseClassAst.CaseClass
 import a8.codegen.FastParseTools.{ParserConfig, Source}
+
 import java.io.File
 import CommonOpsCopy._
+import a8.codegen.CompanionGen.CompanionGenResolver
+
 import scala.language.postfixOps
 
 object Codegen {
@@ -50,7 +53,7 @@ object Codegen {
     val help =
       s"""Accur8 Codegen Tool
          |
-         |Usage: a8-codegen [--help] [--l-help] [template2]
+         |Usage: a8-codegen [ --help | --l-help | template1 | template2 ]
          |
          |Finds scala files in current directory with @CompanionGen and generates companion case classes
          |
@@ -68,18 +71,14 @@ object Codegen {
     import sys.process._
 
     args match {
-      case Array("") =>
-        codeGenScalaFiles(new File("."))
+      case Array("template1") =>
+        CodegenTemplate2.codeGenScalaFiles(new File("."))
       case Array("template2") =>
         CodegenTemplate2.codeGenScalaFiles(new File("."))
-      case Array(oneArg) => oneArg match {
-        case "--help" =>
-          printHelp()
-        case "--l-help" =>
-          "a8-codegen --l-help"!
-        case _ =>
-          printHelp(Some(args))
-      }
+      case Array("--help") =>
+        printHelp()
+      case Array("--l-help") =>
+        "a8-codegen --l-help"!
       case _ =>
         printHelp(Some(args))
     }
@@ -87,13 +86,14 @@ object Codegen {
   }
 
   def codeGenScalaFiles(target: File): Unit = {
+    val companionGenResolver = CompanionGen.resolver(target)
     println(s"finding scala files with @CompanionGen in ${target.getAbsolutePath}")
     val files = findCodegenScalaFiles(target)
     println(s"found ${files.size} scala files")
 
     files
       .foreach( file =>
-        Codegen(file)
+        Codegen(file, companionGenResolver)
           .run()
       )
   }
@@ -125,7 +125,7 @@ object Codegen {
 
 
 
-case class Codegen(file: java.io.File) {
+case class Codegen(file: java.io.File, companionGenResolver: CompanionGenResolver) {
 
   import Codegen._
 
@@ -137,7 +137,7 @@ case class Codegen(file: java.io.File) {
       .drop(1)
       .takeWhile(!_.startsWith("//===="))
 
-  lazy val parser = new CaseClassParser()(ParserConfig(true))
+  lazy val parser = new CaseClassParser(file, companionGenResolver)(ParserConfig(true))
 
   lazy val previousGeneratedSourceCode =
     if ( generatedFile.exists() )
@@ -196,84 +196,12 @@ ${manualImports.mkString("\n")}
 
 }
 
-// this matches the CompanionGen annno in a8.common
-case class CompanionGen(writeNones: Boolean = false, jsonFormat: Boolean = true, rpcHandler: Boolean = false)
-
 case class CaseClassGen(caseClass: CaseClass) {
 
   import Codegen._
 
   lazy val cc: CaseClass = caseClass
   lazy val props: Iterable[CaseClassAst.Property] = caseClass.properties
-
-  lazy val jsonFieldReads: String =
-    props
-      .map { prop =>
-        val (verb, typeName) =
-          if ( prop.typeName.isOption ) "readNullable" -> prop.typeName.args.head
-          else "read" -> prop.typeName
-        val readCall: String =
-          prop
-            .defaultExpr
-            .map(defaultVal => s"x${verb}WithDefault[${typeName}](${defaultVal})")
-            .getOrElse(s"${verb}[${typeName}]")
-        s"""(JsPath \\ "${prop.name}").${readCall}"""
-      }
-      .toList
-      .mkString(" and\n")
-
-  lazy val jsonFieldWrites: String =
-    props
-      .map { prop =>
-        val (verb, typeName) =
-          if ( prop.typeName.isOption && !caseClass.companionGen.writeNones ) "writeNullable" -> prop.typeName.args.head
-          else "write" -> prop.typeName
-        s"""(JsPath \\ "${prop.name}").${verb}[${typeName}]"""
-      }
-      .toList
-      .mkString(" and\n")
-
-  lazy val jsonReadsWritesBody: String =
-    props.size match {
-      case 0 =>
-        s"""
-implicit lazy val jsonReads: Reads[${cc.name}] = JsonAssist.utils.lazyReads(json.emptyObjectReader(${cc.name}()))
-implicit lazy val jsonWrites: OWrites[${cc.name}] = JsonAssist.utils.lazyOWrites(json.emptyObjectWriter[${cc.name}])
-        """
-
-      case 1 =>
-        s"""
-implicit lazy val jsonReads: Reads[${cc.name}] =
-  JsonAssist.utils.lazyReads(
-    ${jsonFieldReads}.map(${cc.name}.apply)
-  )
-
-implicit lazy val jsonWrites: OWrites[${cc.name}] =
-  JsonAssist.utils.lazyOWrites(
-    ${jsonFieldWrites}.contramap { v => v.${props.head.name} }
-  )
-        """
-
-      case _ =>
-        s"""
-implicit lazy val jsonReads: Reads[${cc.name}] =
-  JsonAssist.utils.lazyReads((
-${jsonFieldReads.indent("    ")}
-  )(${cc.name}.apply _))
-
-implicit lazy val jsonWrites: OWrites[${cc.name}] =
-  JsonAssist.utils.lazyOWrites((
-${jsonFieldWrites.indent("    ")}
-  )(unlift(${cc.name}.unapply)))
-        """
-    }
-
-  lazy val lensesBody: String =
-    props
-      .map { prop =>
-        s"lazy val ${prop.name}: Lens[${cc.name},${prop.typeName}] = LensImpl[${cc.name},${prop.typeName}](${prop.name.quoted}, _.${prop.name}, (d,v) => d.copy(${prop.name} = v))"
-      }
-      .mkString("\n")
 
   lazy val parametersBody: String =
     props
@@ -291,25 +219,10 @@ ${jsonFieldWrites.indent("    ")}
       }
       .mkString("\n")
 
-  lazy val rpcHandlerBody: String =
-    if ( caseClass.companionGen.rpcHandler )
-s"""
-implicit val rpcHandler: a8.remoteapi.RpcHandler[${cc.name}] = {
-  import a8.remoteapi.RpcHandler.RpcParm
-  a8.remoteapi.RpcHandler(
-    Vector(
-${props.map(prop => s"RpcParm(parameters.${prop.name})").mkString(",\n").indent("        ")}
-    ),
-    unsafe.rawConstruct,
-  )
-}
-"""
-    else
-      ""
-
   lazy val unsafeBody: String =
 s"""
 object unsafe {
+
   def rawConstruct(values: IndexedSeq[Any]): ${cc.name} = {
     ${cc.name}(
 ${
@@ -323,16 +236,20 @@ ${
     )
   }
   def iterRawConstruct(values: Iterator[Any]): ${cc.name} = {
-    ${cc.name}(
+    val value =
+      ${cc.name}(
 ${
       props
         .zipWithIndex.map { case (prop,i) =>
           s"${prop.name} = values.next().asInstanceOf[${prop.typeName}],"
         }
         .mkString("\n")
-        .indent("      ")
+        .indent("        ")
 }
-    )
+      )
+    if ( values.hasNext )
+       sys.error("")
+    value
   }
   def typedConstruct(${props.map(p => s"${p.name}: ${p.typeName}").mkString(", ")}): ${cc.name} =
     ${cc.name}(${props.map(_.name).mkString(", ")})
@@ -341,24 +258,10 @@ ${
 """
 
   lazy val bareBody = s"""
-${
-    if ( caseClass.companionGen.jsonFormat )
-s"""
-${jsonReadsWritesBody.trim}
-
-lazy val jsonFormat = JsonAssist.utils.lazyFormat(Format(jsonReads, jsonWrites))
-"""
-    else
-      ""
-}
-object lenses {
-${lensesBody.indent("  ")}
-}
 
 object parameters {
 ${parametersBody.indent("  ")}
 }
-${rpcHandlerBody}
 ${unsafeBody}
 
 lazy val allLenses = List(${props.map(p => s"lenses.${p.name}").mkString(",")})
@@ -381,13 +284,53 @@ ${bareBody.trim.indent("  ")}
 
   lazy val bareBodyTemplate2 = s"""
 
-lazy val generator: Generator[${cc.name},parameters.type] =
-  Generator(unsafe.iterRawConstruct, parameters)
+${
+  if ( caseClass.companionGen.messagePack ) {
+s"""
+implicit lazy val codec: a8.wsjdbc.codec.Codec[${cc.name}] =
+  a8.wsjdbc.codec.CodecBuilder(generator)
+${
+  val propLines =
+    caseClass
+      .properties
+      .map(prop => s".addField(_.${prop.name})")
+  (propLines ++ Iterable(".build"))
+    .mkString("\n")
+    .indent("    ")
+}
+""".trim
+  } else {
+    ""
+  }
+}${
+  if ( caseClass.companionGen.rowReader ) {
+s"""
+implicit lazy val rowReader: a8.shared.jdbcf.RowReader[${cc.name}] =
+  a8.shared.jdbcf.RowReaderBuilder(generator)
+${
+  val propLines =
+    caseClass
+      .properties
+      .map(prop => s".addField(_.${prop.name})")
+  (propLines ++ Iterable(".build"))
+    .mkString("\n")
+    .indent("    ")
+}
+""".trim
+  } else {
+    ""
+  }
+}
+
+lazy val generator: Generator[${cc.name},parameters.type] =  {
+  val constructors = Constructors[${cc.name}](${caseClass.properties.size}, unsafe.iterRawConstruct)
+  Generator(constructors, parameters)
+}
 
 object parameters {
 ${parametersBodyTemplate2.indent("  ")}
 }
-${rpcHandlerBody}
+
 ${unsafeBody}
 
 lazy val allParametersHList = ${props.toNonEmpty.map(_.map(p => s"parameters.${p.name}").mkString("", " :: ", " :: ")).getOrElse("") + "shapeless.HNil"}
