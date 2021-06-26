@@ -14,8 +14,9 @@ import scala.language.postfixOps
 object CodegenTemplate2 extends TemplateFactory {
 
   def main(args: Array[String]): Unit = {
-    Codegen.codeGenScalaFiles(ProjectRoot("/Users/glen/code/accur8/composite/sync"))
-    Codegen.codeGenScalaFiles(ProjectRoot("/Users/glen/code/accur8/composite/wsjdbc"))
+    Codegen.runCodeGen(new File("/Users/glen/code/accur8/composite"))
+//    Codegen.codeGenScalaFiles(ProjectRoot("/Users/glen/code/accur8/composite/sync"))
+//    Codegen.codeGenScalaFiles(ProjectRoot("/Users/glen/code/accur8/composite/wsjdbc"))
   }
 
 }

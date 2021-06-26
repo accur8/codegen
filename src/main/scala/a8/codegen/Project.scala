@@ -23,7 +23,7 @@ case class Project(
     import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
     decode[ProjectConfig](jsonStr) match {
       case Left(th) =>
-        throw th
+        throw new RuntimeException(s"error parsing ${codegenDotJsonFile} -- ${th.getMessage}")
       case Right(v) =>
         v
     }

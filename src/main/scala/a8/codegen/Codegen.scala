@@ -26,6 +26,17 @@ object Codegen {
     }
   }
 
+  def findProjectRoots(dir: File): IndexedSeq[ProjectRoot] = {
+    dir.listFiles.flatMap {
+      case d if d.isDirectory =>
+        findProjectRoots(d)
+      case f if f.getName == "codegen.json" =>
+        IndexedSeq(ProjectRoot(dir))
+      case _ =>
+        IndexedSeq.empty
+    }
+  }
+
   def findCodegenScalaFiles(dir: File): IndexedSeq[File] = {
     dir.listFiles.flatMap {
       case d if d.isDirectory =>
@@ -66,7 +77,7 @@ object Codegen {
 
     args match {
       case Array() =>
-        codeGenScalaFiles(ProjectRoot(new File(".")))
+        runCodeGen(new File("."))
       case Array("--help") =>
         printHelp()
       case Array("--l-help") =>
@@ -76,6 +87,11 @@ object Codegen {
     }
 
   }
+
+  def runCodeGen(dir: File): Unit =
+    findProjectRoots(dir)
+      .foreach(codeGenScalaFiles)
+
 
   def codeGenScalaFiles(projectRoot: ProjectRoot): Unit = {
     val project = Project(projectRoot)
