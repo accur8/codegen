@@ -6,34 +6,29 @@ import a8.codegen.FastParseTools.{ParserConfig, Source}
 
 import java.io.File
 import CommonOpsCopy._
-import a8.codegen.CodegenTemplate.TemplateFactory
 import a8.codegen.CompanionGen.CompanionGenResolver
 
 import scala.language.postfixOps
+import MoreOps._
+import a8.codegen.CodegenTemplate.TemplateFactory
 
-object CodegenTemplate2 extends TemplateFactory {
-
-  def main(args: Array[String]): Unit = {
-    Codegen.codeGenScalaFiles(ProjectRoot("/Users/glen/code/accur8/composite/sync"))
-    Codegen.codeGenScalaFiles(ProjectRoot("/Users/glen/code/accur8/composite/wsjdbc"))
-  }
-
+object CodegenTemplate1 extends TemplateFactory {
 }
 
-
-case class CodegenTemplate2(file: java.io.File, project: Project) extends CodegenTemplate {
-
-  import Codegen._
-
+case class CodegenTemplate1(file: java.io.File, project: Project)
+  extends CodegenTemplate
+{
 
   override val companionGenDefault: CompanionGen =
     CompanionGen(
       writeNones = false,
-      jsonFormat = false,
+      jsonFormat = true,
       rpcHandler = false,
-      messagePack = true,
+      messagePack = false,
       rowReader = false,
     )
+
+  import Codegen._
 
   val manualImports =
     previousGeneratedSourceCode
@@ -43,11 +38,7 @@ case class CodegenTemplate2(file: java.io.File, project: Project) extends Codege
       .drop(1)
       .takeWhile(!_.startsWith("//===="))
 
-  lazy val previousGeneratedSourceCode =
-    if ( generatedFile.exists() )
-      scala.io.Source.fromFile(generatedFile).getLines.mkString("\n")
-    else
-      ""
+  lazy val previousGeneratedSourceCode = generatedFile.readTextOpt.getOrElse("")
 
   lazy val generatedFile = new java.io.File(file.getParentFile, "Mx" + file.getName)
 
@@ -60,7 +51,14 @@ case class CodegenTemplate2(file: java.io.File, project: Project) extends Codege
 
   lazy val header = s"""package ${sourceFile.pakkage}
 
-import a8.shared.Meta.{CaseClassParm, Generator, Constructors}
+import a8.common.Lenser.{Lens, LensImpl}Lenser.{Lens, LensImpl}
+import play.api.libs.json.{JsPath, Reads, OWrites}
+import play.api.libs.json._
+import play.api.libs.json.Reads._
+import play.api.libs.functional.syntax._
+import a8.common.CommonOps._
+import a8.common.JsonAssist
+import a8.common.CaseClassParm
 
 /**
 
@@ -76,6 +74,6 @@ ${manualImports.mkString("\n")}
 
 """
 
-  lazy val generatedCaseClassCode = sf.caseClasses.map(CaseClassGen).map(_.bodyTemplate2).mkString("\n\n\n")
+  lazy val generatedCaseClassCode = sf.caseClasses.map(CaseClassGen).map(_.body).mkString("\n\n\n")
 
 }

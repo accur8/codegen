@@ -22,6 +22,16 @@ trait CommonOpsCopy {
 
   implicit class StringOps(private val s: String) {
 
+    def indent(indent: String) = {
+      val result =
+        s.linesIterator
+          .map(indent + _)
+          .mkString("\n")
+      result
+    }
+
+    def quoted = '\"' + s + '\"'
+
     def asBlankOpt: Option[String] =
       if ( s.trim.length == 0 ) None
       else Some(s)

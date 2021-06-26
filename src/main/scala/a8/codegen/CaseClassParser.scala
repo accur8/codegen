@@ -4,10 +4,11 @@ package a8.codegen
 import a8.codegen.FastParseTools.ParserConfig
 import a8.codegen.CaseClassAst.Import
 import a8.codegen.CompanionGen.CompanionGenResolver
+import a8.codegen.ProjectConfig.Anno
 import a8.codegen.{CaseClassAst => ast, FastParseTools => fpt}
 import fastparse.all._
 
-class CaseClassParser(file: java.io.File, companionGenResolver: CompanionGenResolver)(implicit config: ParserConfig) {
+class CaseClassParser(companionGenResolverFn: (String,Anno) => CompanionGen)(implicit config: ParserConfig) {
 
   val comment: P[Unit] =
     P( "//" ~ CharsWhile(_ != '\n') )
@@ -38,32 +39,17 @@ class CaseClassParser(file: java.io.File, companionGenResolver: CompanionGenReso
     P(ws ~ !CompanionGen ~ CharsWhile(!_.isWhitespace) ~ ws)
 //      .log()
 
-  val CompanionGen: P[a8.codegen.CompanionGen.Annotations] =
+  val CompanionGen: P[Anno] =
     P(k0("@CompanionGen") ~ ws ~ ("(" ~ ws ~ CompanionGenParms ~ ws ~ ")").?)
-      .map(parms =>
-        parms
-          .toSeq
-          .flatten
-          .foldLeft(a8.codegen.CompanionGen.Annotations()) { case (cg, (name, value)) =>
-            val valueOpt = Some(value)
-            name match {
-              case "writeNones" =>
-                cg.copy(writeNones = valueOpt)
-              case "jsonFormat" =>
-                cg.copy(jsonFormat = valueOpt)
-              case "rpcHandler" =>
-                cg.copy(rpcHandler = valueOpt)
-              case "messagePack" =>
-                cg.copy(messagePack = valueOpt)
-              case "rowReader" =>
-                cg.copy(rowReader = valueOpt)
-              case _ =>
-                println(s"warning ignoring @CompanionGen value ${name} = ${value}")
-                cg
-            }
-          }
-
-      )
+      .map { parms: Option[Seq[(String, Boolean)]] =>
+        Anno(
+          parms
+            .toSeq
+            .flatten
+            .map(t => t.copy(_2 = t._2))
+            .toMap
+        )
+      }
 
   val CompanionGenParms: P[Seq[(String,Boolean)]] =
     P(CompanionGenParm.rep(sep = Comma))
@@ -83,7 +69,7 @@ class CaseClassParser(file: java.io.File, companionGenResolver: CompanionGenReso
   val CaseClass: P[ast.CaseClass] =
     P(Token.rep ~ ws ~ CompanionGen ~/ ws ~ k0("case") ~ ws ~ k0("class") ~ ws ~ Name ~ ws ~ "(" ~ ws ~/ Property.rep(sep=Comma) ~ Comma.? ~ ws ~ ")" ~ ws )
       .map { case (companionGen, name, props) =>
-        ast.CaseClass(name, props, companionGenResolver.resolve(name, file, companionGen))
+        ast.CaseClass(name, props, companionGenResolverFn(name, companionGen))
 
       }
 //      .log()

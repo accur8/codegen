@@ -2,63 +2,40 @@ package a8.codegen
 
 import com.sun.tools.javac.file.RelativePath
 
+import java.io.File
+import java.nio.file.{FileSystem, FileSystems, Path, PathMatcher}
+import MoreOps._
+import a8.codegen.ProjectConfig.Anno
+
 object CompanionGen {
-
-2
-
-
-  case class Default(
-    filter: String,
-    annotations: Annotations,
-  ) {
-    def matches(caseClassName: String, relativeFilePath: RelativePath): Boolean = ???
-  }
-
-  case class Annotations(
-    writeNones: Option[Boolean] = None,
-    jsonFormat: Option[Boolean] = None,
-    rpcHandler: Option[Boolean] = None,
-    rowReader: Option[Boolean] = None,
-    messagePack: Option[Boolean] = None,
-  ) {
-
-    def merge(right: Annotations) =
-      Annotations(
-        right.writeNones.orElse(writeNones),
-        right.jsonFormat.orElse(jsonFormat),
-        right.rpcHandler.orElse(rpcHandler),
-        right.rowReader.orElse(rowReader),
-        right.messagePack.orElse(messagePack),
-      )
-
-  }
 
 //  case class CompanionGen(writeNones: Boolean = false, jsonFormat: Boolean = true, rpcHandler: Boolean = false, rowReader: Boolean = false, messagePack: Boolean = true)
 
-  def resolver(root: java.io.File): CompanionGenResolver = {
-    ???
+  def resolver(project: Project): CompanionGenResolver = {
+    CompanionGenResolver(project.root, project.config)
   }
 
 
-  case class CompanionGenResolver(root: java.io.File, defaults: Iterable[Default]) {
+  case class CompanionGenResolver(codeRoot: ProjectRoot, projectConfig: ProjectConfig) {
 
-    def resolve(caseClassName: String, file: java.io.File, annotations: Annotations): CompanionGen = {
+    def resolve(caseClassName: String, file: java.io.File, annotations: Anno, defaultCompanionGen: CompanionGen): CompanionGen = {
       val resolvedAnno =
-        defaults
-          .foldLeft(Annotations()) { (anno, default) =>
-            if ( default.matches(caseClassName, file) ) {
-              anno.merge(default.annotations)
+        projectConfig
+          .defaults
+          .foldLeft(Anno()) { (anno, default) =>
+            if ( default.matches(file.toPath) ) {
+              anno.merge(default.resolvedAnno)
             } else {
               anno
             }
           }
           .merge(annotations)
       CompanionGen(
-        writeNones = resolvedAnno.writeNones.getOrElse(false),
-        jsonFormat = resolvedAnno.jsonFormat.getOrElse(true),
-        rpcHandler = resolvedAnno.rpcHandler.getOrElse(false),
-        rowReader = resolvedAnno.rowReader.getOrElse(false),
-        messagePack = resolvedAnno.messagePack.getOrElse(false),
+        writeNones = resolvedAnno.bool("writeNones").getOrElse(defaultCompanionGen.writeNones),
+        jsonFormat = resolvedAnno.bool("jsonFormat").getOrElse(defaultCompanionGen.jsonFormat),
+        rpcHandler = resolvedAnno.bool("rpcHandler").getOrElse(defaultCompanionGen.rpcHandler),
+        rowReader = resolvedAnno.bool("rowReader").getOrElse(defaultCompanionGen.rowReader),
+        messagePack = resolvedAnno.bool("messagePack").getOrElse(defaultCompanionGen.messagePack),
       )
     }
 
