@@ -34,7 +34,8 @@ case class CodegenTemplate2(file: java.io.File, project: Project) extends Codege
       jsonFormat = false,
       rpcHandler = false,
       messagePack = true,
-      mapper = false,
+      jdbcMapper = false,
+      qubesMapper = false,
     )
 
   val manualImports =

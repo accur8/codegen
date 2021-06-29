@@ -25,7 +25,8 @@ case class CodegenTemplate1(file: java.io.File, project: Project)
       jsonFormat = true,
       rpcHandler = false,
       messagePack = false,
-      mapper = false,
+      jdbcMapper = false,
+      qubesMapper = false,
     )
 
   import Codegen._

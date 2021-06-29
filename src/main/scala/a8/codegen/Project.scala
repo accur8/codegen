@@ -14,7 +14,7 @@ case class Project(
 
   lazy val config: ProjectConfig = {
 
-    val codegenDotJsonFile = new File(root.dir, "codegen.json")
+    val codegenDotJsonFile = new File(root.dir.toFile, "codegen.json")
 
     if ( !codegenDotJsonFile.exists() )
       sys.error(s"missing required file codegen.json ${codegenDotJsonFile}")

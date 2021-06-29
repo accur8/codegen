@@ -14,12 +14,12 @@ object BuilderTemplate {
       generateFor = _.messagePack,
     )
 
-  lazy val mapperTemplate =
+  lazy val jdbcMapperTemplate =
     new BuilderTemplate(
-      "mapper",
+      "jdbcMapper",
       TypeName("a8.shared.jdbcf.mapper.Mapper"),
       TypeName("a8.shared.jdbcf.mapper.MapperBuilder"),
-      generateFor = _.mapper,
+      generateFor = _.jdbcMapper,
     ) {
 
       def sqlTableAnno(caseClass: CaseClass): Option[String] =
@@ -70,7 +70,56 @@ object BuilderTemplate {
 
     }
 
-  lazy val templates = List(messagePackTemplate, mapperTemplate)
+  lazy val qubesMapperTemplate =
+    new BuilderTemplate(
+      "qubesMapper",
+      TypeName("a8.sync.qubes.QubesMapper"),
+      TypeName("a8.sync.qubes.QubesMapperBuilder"),
+      generateFor = _.qubesMapper,
+    ) {
+
+      case class QubesAnno(cube: String, appSpace: String)
+
+      def qubesAnno(caseClass: CaseClass): QubesAnno =
+        caseClass
+          .annotations
+          .find(_.name == "QubesAnno")
+          .map { anno =>
+            QubesAnno(
+              cube = anno.parms.find(_.name == "cube").map(_.value).getOrElse('"' + caseClass.name + '"'),
+              appSpace = anno.parms.find(_.name == "appSpace").map(_.value).getOrElse(sys.error("""must supply @QubesAnno(appSpace = "foo") i.e. appSpace annotation field is required""")),
+            )
+          }
+          .getOrElse(sys.error("""for qubesMapper minimally the @QubesAnno(appSpace = "foo") is required for every class marked with @CompanionGen()"""))
+
+      def primaryKey(caseClass: CaseClass): Property =
+        caseClass
+          .properties
+          .find(_.annotations.exists(_.name == "PK"))
+          .getOrElse(sys.error(s"must supply PK on ${caseClass.name}"))
+
+      override def rawBuild(caseClass: CaseClass, includeBuildCall: Boolean = true): String = {
+
+        val qa = qubesAnno(caseClass)
+        val pk = primaryKey(caseClass)
+
+        val base = super.rawBuild(caseClass, false)
+        val suffix =
+          List(
+            s".cubeName(${qa.cube})",
+            s".appSpace(${qa.appSpace})",
+            s".singlePrimaryKey(_.${pk.name})",
+            ".build"
+          )
+
+        (base + suffix.mkString("\n","\n","").indent("    ")).trim
+
+      }
+
+    }
+
+
+  lazy val templates = List(messagePackTemplate, jdbcMapperTemplate, qubesMapperTemplate)
 
 }
 

@@ -99,7 +99,7 @@ object Codegen {
     val templateFactory = CodegenTemplate(project.config.template)
 
     println(s"finding scala files with @CompanionGen in ${projectRoot}")
-    val files = findCodegenScalaFiles(projectRoot.dir)
+    val files = findCodegenScalaFiles(projectRoot.dir.toFile)
     println(s"found ${files.size} scala files")
 
     files

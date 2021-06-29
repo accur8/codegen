@@ -23,7 +23,10 @@ object CompanionGen {
         projectConfig
           .defaults
           .foldLeft(Anno()) { (anno, default) =>
-            if ( default.matches(file.toPath) ) {
+            val absolutePath = file.toPath
+            val relativePath = codeRoot.dir.relativize(absolutePath)
+            toString
+            if ( default.matches(relativePath) ) {
               anno.merge(default.resolvedAnno)
             } else {
               anno
@@ -34,8 +37,9 @@ object CompanionGen {
         writeNones = resolvedAnno.bool("writeNones").getOrElse(defaultCompanionGen.writeNones),
         jsonFormat = resolvedAnno.bool("jsonFormat").getOrElse(defaultCompanionGen.jsonFormat),
         rpcHandler = resolvedAnno.bool("rpcHandler").getOrElse(defaultCompanionGen.rpcHandler),
-        mapper = resolvedAnno.bool("mapper").getOrElse(defaultCompanionGen.mapper),
+        jdbcMapper = resolvedAnno.bool("jdbcMapper").getOrElse(defaultCompanionGen.jdbcMapper),
         messagePack = resolvedAnno.bool("messagePack").getOrElse(defaultCompanionGen.messagePack),
+        qubesMapper = resolvedAnno.bool("qubesMapper").getOrElse(defaultCompanionGen.qubesMapper),
       )
     }
 
@@ -52,7 +56,8 @@ case class CompanionGen(
   writeNones: Boolean,
   jsonFormat: Boolean,
   rpcHandler: Boolean,
-  mapper: Boolean,
+  jdbcMapper: Boolean,
   messagePack: Boolean,
+  qubesMapper: Boolean,
 )
 
