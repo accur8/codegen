@@ -6,7 +6,7 @@ import CommonOpsCopy._
 
 object BuilderTemplate {
 
-  val messagePackTemplate =
+  lazy val messagePackTemplate =
     new BuilderTemplate(
       "codec",
       "a8.wsjdbc.codec.Codec",
@@ -14,18 +14,29 @@ object BuilderTemplate {
       generateFor = _.messagePack,
     )
 
-  val rowReaderTemplate =
+  lazy val mapperTemplate =
     new BuilderTemplate(
-      "rowReader",
+      "mapper",
       "a8.shared.jdbcf.RowReader",
-      "a8.shared.jdbcf.RowReaderBuilder",
+      "a8.shared.jdbcf.MapperBuilder",
       generateFor = _.rowReader,
+      Some("a8.shared.jdbcf.Mapper"),
     )
+
+  lazy val templates = List(messagePackTemplate, mapperTemplate)
 
 }
 
 
-class BuilderTemplate(valName: String, typeClassName: String, builderClassName: String, generateFor: CompanionGen=>Boolean) {
+class BuilderTemplate(
+  valName: String,
+  parmTypeClassName: String,
+  builderClassName: String,
+  generateFor: CompanionGen=>Boolean,
+  finalTypeClassName: Option[String] = None,
+) {
+
+  def resolvedFinalTypeClassName = finalTypeClassName.getOrElse(parmTypeClassName)
 
   def build(caseClass: CaseClass): Option[String] = {
     if ( generateFor(caseClass.companionGen) ) {
@@ -42,7 +53,7 @@ class BuilderTemplate(valName: String, typeClassName: String, builderClassName: 
         .map(prop => s".addField(_.${prop.name})")
         .mkString("\n")
     s"""
-implicit lazy val ${valName}: ${typeClassName}[${caseClass.name}] =
+implicit lazy val ${valName}: ${resolvedFinalTypeClassName}[${caseClass.name}] =
   ${builderClassName}(generator)
 ${propLines.indent("    ")}
     .build
