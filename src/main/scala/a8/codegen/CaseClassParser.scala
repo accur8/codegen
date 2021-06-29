@@ -67,9 +67,9 @@ class CaseClassParser(companionGenResolverFn: (String,Anno) => CompanionGen)(imp
 
 
   val CaseClass: P[ast.CaseClass] =
-    P(Token.rep ~ ws ~ CompanionGen ~/ ws ~ k0("case") ~ ws ~ k0("class") ~ ws ~ Name ~ ws ~ "(" ~ ws ~/ Property.rep(sep=Comma) ~ Comma.? ~ ws ~ ")" ~ ws )
-      .map { case (companionGen, name, props) =>
-        ast.CaseClass(name, props, companionGenResolverFn(name, companionGen))
+    P(Token.rep ~ ws ~ CompanionGen ~/ ws ~ Annotation.rep ~ ws ~ k0("case") ~ ws ~ k0("class") ~ ws ~ Name ~ ws ~ "(" ~ ws ~/ Property.rep(sep=Comma) ~ Comma.? ~ ws ~ ")" ~ ws )
+      .map { case (companionGen, annotations, name, props) =>
+        ast.CaseClass(name, props, companionGenResolverFn(name, companionGen), annotations)
 
       }
 //      .log()

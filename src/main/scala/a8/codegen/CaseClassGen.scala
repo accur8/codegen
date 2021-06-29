@@ -93,7 +93,8 @@ ${bareBody.trim.indent("  ")}
   lazy val bareBodyTemplate2 = s"""
 
 ${
-    BuilderTemplate.templates
+    BuilderTemplate
+      .templates
       .flatMap(_.build(caseClass))
       .mkString("\n")
 

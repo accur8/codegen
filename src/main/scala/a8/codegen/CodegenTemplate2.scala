@@ -14,8 +14,8 @@ import scala.language.postfixOps
 object CodegenTemplate2 extends TemplateFactory {
 
   def main(args: Array[String]): Unit = {
-    Codegen.runCodeGen(new File("c:/Users/glen/code/accur8/composite"))
-//    Codegen.runCodeGen(new File("/Users/glen/code/accur8/composite"))
+//    Codegen.runCodeGen(new File("c:/Users/glen/code/accur8/composite"))
+    Codegen.runCodeGen(new File("/Users/glen/code/accur8/composite"))
 //    Codegen.codeGenScalaFiles(ProjectRoot("/Users/glen/code/accur8/composite/sync"))
 //    Codegen.codeGenScalaFiles(ProjectRoot("/Users/glen/code/accur8/composite/wsjdbc"))
   }
@@ -34,7 +34,7 @@ case class CodegenTemplate2(file: java.io.File, project: Project) extends Codege
       jsonFormat = false,
       rpcHandler = false,
       messagePack = true,
-      rowReader = false,
+      mapper = false,
     )
 
   val manualImports =

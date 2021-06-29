@@ -17,6 +17,7 @@ object CaseClassAst {
     name: String,
     properties: Iterable[Property],
     companionGen: CompanionGen,
+    annotations: Iterable[Annotation],
   )
 
   case class Annotation(

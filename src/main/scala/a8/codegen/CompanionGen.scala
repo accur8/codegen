@@ -34,7 +34,7 @@ object CompanionGen {
         writeNones = resolvedAnno.bool("writeNones").getOrElse(defaultCompanionGen.writeNones),
         jsonFormat = resolvedAnno.bool("jsonFormat").getOrElse(defaultCompanionGen.jsonFormat),
         rpcHandler = resolvedAnno.bool("rpcHandler").getOrElse(defaultCompanionGen.rpcHandler),
-        rowReader = resolvedAnno.bool("rowReader").getOrElse(defaultCompanionGen.rowReader),
+        mapper = resolvedAnno.bool("mapper").getOrElse(defaultCompanionGen.mapper),
         messagePack = resolvedAnno.bool("messagePack").getOrElse(defaultCompanionGen.messagePack),
       )
     }
@@ -52,7 +52,7 @@ case class CompanionGen(
   writeNones: Boolean,
   jsonFormat: Boolean,
   rpcHandler: Boolean,
-  rowReader: Boolean,
+  mapper: Boolean,
   messagePack: Boolean,
 )
 
