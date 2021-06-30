@@ -14,6 +14,14 @@ object BuilderTemplate {
       generateFor = _.messagePack,
     )
 
+  lazy val circeTemplate =
+    new BuilderTemplate(
+      "circeCodec",
+      TypeName("io.circe.Codec"),
+      TypeName("a8.shared.json.JsonObjectCodecBuilder"),
+      generateFor = _.circeCodec,
+    )
+
   lazy val jdbcMapperTemplate =
     new BuilderTemplate(
       "jdbcMapper",
@@ -119,7 +127,7 @@ object BuilderTemplate {
     }
 
 
-  lazy val templates = List(messagePackTemplate, jdbcMapperTemplate, qubesMapperTemplate)
+  lazy val templates = List(messagePackTemplate, jdbcMapperTemplate, qubesMapperTemplate, circeTemplate)
 
 }
 

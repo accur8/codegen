@@ -40,6 +40,7 @@ object CompanionGen {
         jdbcMapper = resolvedAnno.bool("jdbcMapper").getOrElse(defaultCompanionGen.jdbcMapper),
         messagePack = resolvedAnno.bool("messagePack").getOrElse(defaultCompanionGen.messagePack),
         qubesMapper = resolvedAnno.bool("qubesMapper").getOrElse(defaultCompanionGen.qubesMapper),
+        circeCodec = resolvedAnno.bool("circeCodec").getOrElse(defaultCompanionGen.circeCodec),
       )
     }
 
@@ -59,5 +60,6 @@ case class CompanionGen(
   jdbcMapper: Boolean,
   messagePack: Boolean,
   qubesMapper: Boolean,
+  circeCodec: Boolean,
 )
 

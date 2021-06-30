@@ -27,6 +27,7 @@ case class CodegenTemplate1(file: java.io.File, project: Project)
       messagePack = false,
       jdbcMapper = false,
       qubesMapper = false,
+      circeCodec = false,
     )
 
   import Codegen._
