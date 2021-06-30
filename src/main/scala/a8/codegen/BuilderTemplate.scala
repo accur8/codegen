@@ -8,7 +8,7 @@ object BuilderTemplate {
 
   lazy val messagePackTemplate =
     new BuilderTemplate(
-      "codec",
+      "messagePackCodec",
       TypeName("a8.wsjdbc.codec.Codec"),
       TypeName("a8.wsjdbc.codec.CodecBuilder"),
       generateFor = _.messagePack,
