@@ -41,10 +41,23 @@ object CompanionGen {
         messagePack = resolvedAnno.bool("messagePack").getOrElse(defaultCompanionGen.messagePack),
         qubesMapper = resolvedAnno.bool("qubesMapper").getOrElse(defaultCompanionGen.qubesMapper),
         circeCodec = resolvedAnno.bool("circeCodec").getOrElse(defaultCompanionGen.circeCodec),
+        jsonObjectCodec = resolvedAnno.bool("jsonObjectCodec").getOrElse(defaultCompanionGen.jsonObjectCodec),
       )
     }
 
   }
+
+  val empty =
+    CompanionGen(
+      writeNones = false,
+      jsonFormat = false,
+      rpcHandler = false,
+      jdbcMapper = false,
+      messagePack = false,
+      qubesMapper = false,
+      circeCodec = false,
+      jsonObjectCodec = false,
+    )
 
 }
 
@@ -61,5 +74,6 @@ case class CompanionGen(
   messagePack: Boolean,
   qubesMapper: Boolean,
   circeCodec: Boolean,
+  jsonObjectCodec: Boolean,
 )
 

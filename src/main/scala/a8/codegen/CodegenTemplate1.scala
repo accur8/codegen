@@ -19,16 +19,7 @@ case class CodegenTemplate1(file: java.io.File, project: Project)
   extends CodegenTemplate
 {
 
-  override val companionGenDefault: CompanionGen =
-    CompanionGen(
-      writeNones = false,
-      jsonFormat = true,
-      rpcHandler = false,
-      messagePack = false,
-      jdbcMapper = false,
-      qubesMapper = false,
-      circeCodec = false,
-    )
+  override val companionGenDefault: CompanionGen = CompanionGen.empty.copy(jsonFormat = true)
 
   import Codegen._
 

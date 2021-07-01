@@ -32,7 +32,7 @@ trait CodegenTemplate {
   val file: File
 
 
-  lazy val parser = new CaseClassParser(resolveCompanionGen)(ParserConfig(true))
+  lazy val parser = new CaseClassParser(file, resolveCompanionGen)(ParserConfig(true))
 
   def resolveCompanionGen(caseClassName: String, sourceAnno: a8.codegen.ProjectConfig.Anno): CompanionGen =
     project

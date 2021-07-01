@@ -18,8 +18,16 @@ object BuilderTemplate {
     new BuilderTemplate(
       "circeCodec",
       TypeName("io.circe.Codec"),
-      TypeName("a8.shared.json.JsonObjectCodecBuilder"),
+      TypeName("a8.shared.CirceCodecBuilder"),
       generateFor = _.circeCodec,
+    )
+
+  lazy val jsonObjectTemplate =
+    new BuilderTemplate(
+      "jsonObjectCodec",
+      TypeName("a8.shared.json.JsonObjectCodec"),
+      TypeName("a8.shared.json.JsonObjectCodecBuilder"),
+      generateFor = _.jsonObjectCodec,
     )
 
   lazy val jdbcMapperTemplate =
@@ -98,7 +106,7 @@ object BuilderTemplate {
               appSpace = anno.parms.find(_.name == "appSpace").map(_.value).getOrElse(sys.error("""must supply @QubesAnno(appSpace = "foo") i.e. appSpace annotation field is required""")),
             )
           }
-          .getOrElse(sys.error("""for qubesMapper minimally the @QubesAnno(appSpace = "foo") is required for every class marked with @CompanionGen()"""))
+          .getOrElse(sys.error(s"""for qubesMapper minimally the @QubesAnno(appSpace = "foo") is required for every class marked with @CompanionGen() on ${caseClass.qualifiedName}"""))
 
       def primaryKey(caseClass: CaseClass): Property =
         caseClass
@@ -127,7 +135,7 @@ object BuilderTemplate {
     }
 
 
-  lazy val templates = List(messagePackTemplate, jdbcMapperTemplate, qubesMapperTemplate, circeTemplate)
+  lazy val templates = List(messagePackTemplate, jdbcMapperTemplate, qubesMapperTemplate, circeTemplate, jsonObjectTemplate)
 
 }
 

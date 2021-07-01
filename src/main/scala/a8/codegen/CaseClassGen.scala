@@ -96,7 +96,7 @@ ${
     BuilderTemplate
       .templates
       .flatMap(_.build(caseClass))
-      .mkString("\n")
+      .mkString("\n\n")
 
 }
 

@@ -14,11 +14,14 @@ object CaseClassAst {
   )
 
   case class CaseClass(
+    file: java.io.File,
     name: String,
     properties: Iterable[Property],
     companionGen: CompanionGen,
     annotations: Iterable[Annotation],
-  )
+  ) {
+    val qualifiedName = file.getCanonicalPath
+  }
 
   case class Annotation(
     name: String,

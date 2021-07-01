@@ -8,7 +8,7 @@ import a8.codegen.ProjectConfig.Anno
 import a8.codegen.{CaseClassAst => ast, FastParseTools => fpt}
 import fastparse.all._
 
-class CaseClassParser(companionGenResolverFn: (String,Anno) => CompanionGen)(implicit config: ParserConfig) {
+class CaseClassParser(file: java.io.File, companionGenResolverFn: (String,Anno) => CompanionGen)(implicit config: ParserConfig) {
 
   val comment: P[Unit] =
     P( "//" ~ CharsWhile(_ != '\n') )
@@ -69,7 +69,7 @@ class CaseClassParser(companionGenResolverFn: (String,Anno) => CompanionGen)(imp
   val CaseClass: P[ast.CaseClass] =
     P(Token.rep ~ ws ~ CompanionGen ~/ ws ~ Annotation.rep ~ ws ~ k0("case") ~ ws ~ k0("class") ~ ws ~ Name ~ ws ~ "(" ~ ws ~/ Property.rep(sep=Comma) ~ Comma.? ~ ws ~ ")" ~ ws )
       .map { case (companionGen, annotations, name, props) =>
-        ast.CaseClass(name, props, companionGenResolverFn(name, companionGen), annotations)
+        ast.CaseClass(file, name, props, companionGenResolverFn(name, companionGen), annotations)
 
       }
 //      .log()

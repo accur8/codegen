@@ -28,16 +28,7 @@ case class CodegenTemplate2(file: java.io.File, project: Project) extends Codege
   import Codegen._
 
 
-  override val companionGenDefault: CompanionGen =
-    CompanionGen(
-      writeNones = false,
-      jsonFormat = false,
-      rpcHandler = false,
-      messagePack = false,
-      jdbcMapper = false,
-      qubesMapper = false,
-      circeCodec = false,
-    )
+  override val companionGenDefault: CompanionGen = CompanionGen.empty
 
   val manualImports =
     previousGeneratedSourceCode
