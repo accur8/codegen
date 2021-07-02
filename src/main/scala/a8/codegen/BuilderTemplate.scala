@@ -27,7 +27,7 @@ object BuilderTemplate {
       "jsonObjectCodec",
       TypeName("a8.shared.json.JsonObjectCodec"),
       TypeName("a8.shared.json.JsonObjectCodecBuilder"),
-      generateFor = _.jsonObjectCodec,
+      generateFor = _.jsonCodec,
     )
 
   lazy val jdbcMapperTemplate =

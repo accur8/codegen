@@ -41,7 +41,7 @@ object CompanionGen {
         messagePack = resolvedAnno.bool("messagePack").getOrElse(defaultCompanionGen.messagePack),
         qubesMapper = resolvedAnno.bool("qubesMapper").getOrElse(defaultCompanionGen.qubesMapper),
         circeCodec = resolvedAnno.bool("circeCodec").getOrElse(defaultCompanionGen.circeCodec),
-        jsonObjectCodec = resolvedAnno.bool("jsonObjectCodec").getOrElse(defaultCompanionGen.jsonObjectCodec),
+        jsonCodec = resolvedAnno.bool("jsonCodec").getOrElse(defaultCompanionGen.jsonCodec),
       )
     }
 
@@ -56,7 +56,7 @@ object CompanionGen {
       messagePack = false,
       qubesMapper = false,
       circeCodec = false,
-      jsonObjectCodec = false,
+      jsonCodec = false,
     )
 
 }
@@ -74,6 +74,6 @@ case class CompanionGen(
   messagePack: Boolean,
   qubesMapper: Boolean,
   circeCodec: Boolean,
-  jsonObjectCodec: Boolean,
+  jsonCodec: Boolean,
 )
 
