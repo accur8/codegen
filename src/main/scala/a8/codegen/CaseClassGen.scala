@@ -111,8 +111,6 @@ ${parametersBodyTemplate2.indent("  ")}
 
 ${unsafeBody}
 
-lazy val allParametersHList = ${props.toNonEmpty.map(_.map(p => s"parameters.${p.name}").mkString("", " :: ", " :: ")).getOrElse("") + "shapeless.HNil"}
-
 lazy val typeName = "${cc.name}"
 
 """

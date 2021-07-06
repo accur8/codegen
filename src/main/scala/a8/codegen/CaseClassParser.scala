@@ -90,7 +90,7 @@ class CaseClassParser(file: java.io.File, companionGenResolverFn: (String,Anno) 
 //      .log()
 
   val Property =
-    P(ws ~ Annotation.rep ~ ws ~ Name ~ ws ~ ":" ~ ws ~ TypeName ~ ws ~ ("=" ~ ws ~ Expr.!).?)
+    P(ws ~ Annotation.rep ~ ws ~ (Name|QuotedName) ~ ws ~ ":" ~ ws ~ TypeName ~ ws ~ ("=" ~ ws ~ Expr.!).?)
       .map { case (annotations, name, typeName, defaultValue) =>
         ast.Property(name, typeName, defaultValue, annotations)
       }
@@ -135,6 +135,9 @@ class CaseClassParser(file: java.io.File, companionGenResolverFn: (String,Anno) 
   val Name: P[String] =
     P( (!Keyword) ~ (IdentFirstChar ~ IdentSecondChar.rep).! ~ ws )
 //      .log()
+
+  val QuotedName: P[String] =
+    P( ("`" ~ (IdentFirstChar ~ IdentSecondChar.rep) ~ "`").! ~ ws )
 
   val IdentFirstChar =
     P( CharsWhile(ch => ch.isLetter || ch == '_' ) )
