@@ -73,7 +73,7 @@ object BuilderTemplate {
           primaryKeyField match {
             case Some(pkf) =>
               List(
-                s".singlePrimaryKey(_.${pkf.name})",
+                s".singlePrimaryKey(_.${pkf.nameAsVal})",
                 ".buildKeyedMapper"
               )
             case None =>
@@ -124,7 +124,7 @@ object BuilderTemplate {
           List(
             s".cubeName(${qa.cube})",
             s".appSpace(${qa.appSpace})",
-            s".singlePrimaryKey(_.${pk.name})",
+            s".singlePrimaryKey(_.${pk.nameAsVal})",
             ".build"
           )
 
@@ -162,7 +162,7 @@ class BuilderTemplate(
     val propLines =
       caseClass
         .properties
-        .map(prop => s".addField(_.${prop.name})")
+        .map(prop => s".addField(_.${prop.nameAsVal})")
     val buildCall = includeBuildCall.option(".build")
     val body = (propLines ++ buildCall).mkString("\n").indent("    ")
     s"""

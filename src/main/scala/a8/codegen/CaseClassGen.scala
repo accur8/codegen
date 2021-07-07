@@ -15,7 +15,7 @@ case class CaseClassGen(caseClass: CaseClass) {
     props
       .zipWithIndex
       .map { case (prop, ordinal) =>
-        s"lazy val ${prop.name}: CaseClassParm[${cc.name},${prop.typeName}] = CaseClassParm[${cc.name},${prop.typeName}](${prop.name.quoted}, lenses.${prop.name}, ${prop.defaultExpr.map("()=> " + _)}, ${ordinal})"
+        s"lazy val ${prop.nameAsVal}: CaseClassParm[${cc.name},${prop.typeName}] = CaseClassParm[${cc.name},${prop.typeName}](${prop.nameAsStringLit}, lenses.${prop.nameAsVal}, ${prop.defaultExpr.map("()=> " + _)}, ${ordinal})"
       }
       .mkString("\n")
 
@@ -23,7 +23,7 @@ case class CaseClassGen(caseClass: CaseClass) {
     props
       .zipWithIndex
       .map { case (prop, ordinal) =>
-        s"lazy val ${prop.name}: CaseClassParm[${cc.name},${prop.typeName}] = CaseClassParm[${cc.name},${prop.typeName}](${prop.name.quoted}, _.${prop.name}, (d,v) => d.copy(${prop.name} = v), ${prop.defaultExpr.map("()=> " + _)}, ${ordinal})"
+        s"lazy val ${prop.nameAsVal}: CaseClassParm[${cc.name},${prop.typeName}] = CaseClassParm[${cc.name},${prop.typeName}](${prop.nameAsStringLit}, _.${prop.nameAsVal}, (d,v) => d.copy(${prop.nameAsVal} = v), ${prop.defaultExpr.map("()=> " + _)}, ${ordinal})"
       }
       .mkString("\n")
 
@@ -36,7 +36,7 @@ object unsafe {
 ${
       props
         .zipWithIndex.map { case (prop,i) =>
-          s"${prop.name} = values(${i}).asInstanceOf[${prop.typeName}],"
+          s"${prop.nameAsVal} = values(${i}).asInstanceOf[${prop.typeName}],"
         }
         .mkString("\n")
         .indent("      ")
@@ -49,7 +49,7 @@ ${
 ${
       props
         .zipWithIndex.map { case (prop,i) =>
-          s"${prop.name} = values.next().asInstanceOf[${prop.typeName}],"
+          s"${prop.nameAsVal} = values.next().asInstanceOf[${prop.typeName}],"
         }
         .mkString("\n")
         .indent("        ")
@@ -59,8 +59,8 @@ ${
        sys.error("")
     value
   }
-  def typedConstruct(${props.map(p => s"${p.name}: ${p.typeName}").mkString(", ")}): ${cc.name} =
-    ${cc.name}(${props.map(_.name).mkString(", ")})
+  def typedConstruct(${props.map(p => s"${p.nameAsVal}: ${p.typeName}").mkString(", ")}): ${cc.name} =
+    ${cc.name}(${props.map(_.nameAsVal).mkString(", ")})
 
 }
 """
@@ -72,11 +72,11 @@ ${parametersBody.indent("  ")}
 }
 ${unsafeBody}
 
-lazy val allLenses = List(${props.map(p => s"lenses.${p.name}").mkString(",")})
+lazy val allLenses = List(${props.map(p => s"lenses.${p.nameAsVal}").mkString(",")})
 
-lazy val allLensesHList = ${props.toNonEmpty.map(_.map(p => s"lenses.${p.name}").mkString("", " :: ", " :: ")).getOrElse("") + "shapeless.HNil"}
+lazy val allLensesHList = ${props.toNonEmpty.map(_.map(p => s"lenses.${p.nameAsVal}").mkString("", " :: ", " :: ")).getOrElse("") + "shapeless.HNil"}
 
-lazy val allParametersHList = ${props.toNonEmpty.map(_.map(p => s"parameters.${p.name}").mkString("", " :: ", " :: ")).getOrElse("") + "shapeless.HNil"}
+lazy val allParametersHList = ${props.toNonEmpty.map(_.map(p => s"parameters.${p.nameAsVal}").mkString("", " :: ", " :: ")).getOrElse("") + "shapeless.HNil"}
 
 lazy val typeName = "${cc.name}"
 

@@ -34,13 +34,23 @@ object CaseClassAst {
   )
 
   case class Property(
-    name: String,
+    rawName: String,
     typeName: TypeName,
     defaultExpr: Option[String],
     annotations: Iterable[Annotation],
   ) {
+    val nameAsVal: String = rawName
+    val nameAsStringLit: String = {
+      val s =
+        if ( rawName.startsWith("`") )
+          rawName.substring(1, rawName.length-1)
+        else
+          rawName
+      '"'.toString + s + '"'.toString
+    }
+
     override def toString =
-      name + ": " + typeName + defaultExpr.map(" = " + _).getOrElse("")
+      nameAsVal + ": " + typeName + defaultExpr.map(" = " + _).getOrElse("")
   }
 
   case class TypeName(name: String, args: Iterable[TypeName] = Nil) {
