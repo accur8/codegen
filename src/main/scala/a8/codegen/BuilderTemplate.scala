@@ -25,10 +25,15 @@ object BuilderTemplate {
   lazy val jsonObjectTemplate =
     new BuilderTemplate(
       "jsonCodec",
-      TypeName("a8.shared.json.JsonObjectCodec"),
+      TypeName("a8.shared.json.JsonTypedCodec"),
       TypeName("a8.shared.json.JsonObjectCodecBuilder"),
       generateFor = _.jsonCodec,
-    )
+    ) {
+
+      override def resolveTypeClassName(caseClass: CaseClass): String =
+        s"${typeClassName.fullName}[${caseClass.name},a8.shared.json.ast.JsObj]"
+
+    }
 
   lazy val jdbcMapperTemplate =
     new BuilderTemplate(
@@ -49,12 +54,12 @@ object BuilderTemplate {
           .properties
           .find(_.annotations.exists(_.name == "PK"))
 
-      override def typeClassName(caseClass: CaseClass): String = {
+      override def resolveTypeClassName(caseClass: CaseClass): String = {
         primaryKey(caseClass) match {
           case Some(pk) =>
             s"a8.shared.jdbcf.mapper.KeyedMapper[${caseClass.name},${pk.typeName}]"
           case None =>
-            super.typeClassName(caseClass)
+            super.resolveTypeClassName(caseClass)
         }
       }
 
@@ -141,10 +146,10 @@ object BuilderTemplate {
 
 
 class BuilderTemplate(
-  valName: String,
-  typeClassName: TypeName,
-  builderClassName: TypeName,
-  generateFor: CompanionGen=>Boolean,
+  val valName: String,
+  val typeClassName: TypeName,
+  val builderClassName: TypeName,
+  val generateFor: CompanionGen=>Boolean,
 ) {
 
   def build(caseClass: CaseClass): Option[String] = {
@@ -155,7 +160,7 @@ class BuilderTemplate(
     }
   }
 
-  def typeClassName(caseClass: CaseClass): String =
+  def resolveTypeClassName(caseClass: CaseClass): String =
     s"${typeClassName.fullName}[${caseClass.name}]"
 
   def rawBuild(caseClass: CaseClass, includeBuildCall: Boolean = true): String = {
@@ -166,7 +171,7 @@ class BuilderTemplate(
     val buildCall = includeBuildCall.option(".build")
     val body = (propLines ++ buildCall).mkString("\n").indent("    ")
     s"""
-implicit lazy val ${valName}: ${typeClassName(caseClass)} =
+implicit lazy val ${valName}: ${resolveTypeClassName(caseClass)} =
   ${builderClassName}(generator)
 ${body}
 """.trim
