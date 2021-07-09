@@ -3,7 +3,7 @@ package a8.codegen
 import a8.codegen.CaseClassAst.CaseClass
 import a8.codegen.FastParseTools.{ParserConfig, Source}
 
-import java.io.File
+import java.io.{File, StringWriter}
 import CommonOpsCopy._
 import a8.codegen.CompanionGen.CompanionGenResolver
 
@@ -112,8 +112,20 @@ object Codegen {
 //    codeGenScalaFiles(new File("."))
 
   def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
-    val p = new java.io.PrintWriter(f)
-    try { op(p) } finally { p.close() }
+    // take care to generate all the code and then write the new file so we don't half write the file and then crash
+    val sw = new StringWriter()
+    val p = new java.io.PrintWriter(sw)
+    try {
+      op(p)
+      val actual = new java.io.PrintWriter(f)
+      try {
+        actual.write(sw.toString)
+      } finally {
+        actual.close()
+      }
+    } finally {
+      p.close()
+    }
   }
 
   def loadFileContents(f: File): Option[String] = {

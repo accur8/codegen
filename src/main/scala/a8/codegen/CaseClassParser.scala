@@ -90,14 +90,23 @@ class CaseClassParser(file: java.io.File, companionGenResolverFn: (String,Anno) 
 //      .log()
 
   val Property =
-    P(ws ~ Annotation.rep ~ ws ~ (Name|QuotedName) ~ ws ~ ":" ~ ws ~ TypeName ~ ws ~ ("=" ~ ws ~ Expr.!).?)
+    P(ws ~ Annotation.rep ~ ws ~ (Name|QuotedName) ~ ws ~ ":" ~ ws ~ TypeName ~ ws ~ ("=" ~ ws ~ DefaultValueExpr.!).?)
       .map { case (annotations, name, typeName, defaultValue) =>
         ast.Property(name, typeName, defaultValue, annotations)
       }
 //      .log()
 
+  val Operator: P0 =
+    P( CharsWhile(ch => !(ch.isDigit || ch.isLetter || ch.isWhitespace || ch == ',' || ch == ')' || ch == '(')) )
+//      .log()
 
-  val Expr: P0 = P( Atom )
+  val DefaultValueExpr: P0 =
+    P( Expr )
+//      .log()
+
+  val Expr: P0 =
+    P( Atom ~ ws ~ (Operator ~ ws ~ Expr ~ ws).rep )
+//      .log()
 
   val Atom: P0 =
     P(
@@ -119,7 +128,7 @@ class CaseClassParser(file: java.io.File, companionGenResolverFn: (String,Anno) 
     P("(" ~ ws ~ Expr ~ ws ~ ")").map( _ => () )
 
   val FunctionCall: P0 =
-    P(Name.rep(sep=Dot) ~ FunctionSuffix.?).map( _ => () )
+    P(Name.rep(min=1, sep=Dot) ~ FunctionSuffix.?).map( _ => () )
 
   val FunctionSuffix: P0 =
     P( "(" ~ ws ~ Expr.rep(sep=Comma) ~ ws ~ ")" )
