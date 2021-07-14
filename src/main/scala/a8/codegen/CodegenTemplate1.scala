@@ -23,7 +23,7 @@ case class CodegenTemplate1(file: java.io.File, project: Project)
 
   import Codegen._
 
-  val manualImports =
+  lazy val manualImports =
     previousGeneratedSourceCode
       .linesIterator
       .toList
@@ -38,7 +38,7 @@ case class CodegenTemplate1(file: java.io.File, project: Project)
 
 //  val sourceCode = scala.io.Source.fromFile("model/shared/src/main/scala/a8/manna/model/Tester2.scala").mkString
   lazy val sourceCode = scala.io.Source.fromFile(file).getLines.mkString("\n")
-
+  //====
   lazy val sourceFile = FastParseTools.parse(Source(sourceCode, file.getPath), parser.SourceFile)
   lazy val sf = sourceFile
 

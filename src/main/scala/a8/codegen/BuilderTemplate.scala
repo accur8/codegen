@@ -101,6 +101,10 @@ object BuilderTemplate {
 
       case class QubesAnno(cube: String, appSpace: String)
 
+      override def resolveTypeClassName(caseClass: CaseClass): String = {
+        s"a8.sync.qubes.QubesKeyedMapper[${caseClass.name},${primaryKey(caseClass).typeName}]"
+      }
+
       def qubesAnno(caseClass: CaseClass): QubesAnno =
         caseClass
           .annotations
@@ -130,7 +134,7 @@ object BuilderTemplate {
             s".cubeName(${qa.cube})",
             s".appSpace(${qa.appSpace})",
             s".singlePrimaryKey(_.${pk.nameAsVal})",
-            ".build"
+            ".build",
           )
 
         (base + suffix.mkString("\n","\n","").indent("    ")).trim
