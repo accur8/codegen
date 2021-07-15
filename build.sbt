@@ -48,7 +48,8 @@ lazy val codegen =
         "com.lihaoyi" %% "fastparse" % "0.4.4",
         "io.circe" %% "circe-core" % "0.14.1",
         "io.circe" %% "circe-generic" % "0.14.1",
-        "io.circe" %% "circe-parser" % "0.14.1"
+        "io.circe" %% "circe-parser" % "0.14.1",
+        "co.fs2" %% "fs2-io" % "3.0.2"
       )
     )
 

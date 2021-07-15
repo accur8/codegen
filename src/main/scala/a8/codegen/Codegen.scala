@@ -6,12 +6,21 @@ import a8.codegen.FastParseTools.{ParserConfig, Source}
 import java.io.{File, StringWriter}
 import CommonOpsCopy._
 import a8.codegen.CompanionGen.CompanionGenResolver
+import cats.effect.{ExitCode, IO, IOApp}
 
+import java.nio.file.{FileVisitOption, Path}
 import scala.language.postfixOps
+import scala.util.Try
+import scala.util.control.NonFatal
+import cats.implicits._
+import cats.effect.implicits._
 
-object Codegen {
+object Codegen extends IOApp {
 
-  def isCodgenFile(f: File): Boolean = {
+  val maxConcurrent = 20
+
+  def isCodgenFile(p: Path): Boolean = {
+    val f = p.toFile
     if (
       f.isFile
         && f.getName.endsWith(".scala")
@@ -26,90 +35,137 @@ object Codegen {
     }
   }
 
-  def findProjectRoots(dir: File): IndexedSeq[ProjectRoot] = {
-    dir.listFiles.flatMap {
-      case d if d.isDirectory =>
-        findProjectRoots(d)
-      case f if f.getName == "codegen.json" =>
-        IndexedSeq(ProjectRoot(dir))
-      case _ =>
-        IndexedSeq.empty
+  def findProjectRoots(dir: File): fs2.Stream[IO,ProjectRoot] =
+    fs2.io.file
+      .Files[IO]
+      .walk(dir.toPath, Seq(FileVisitOption.FOLLOW_LINKS))
+//      .evalMap { f =>
+//        IO.blocking {
+//          println(f)
+//          f
+//        }
+//      }
+      .collect {
+        case p if p.toFile.getName == "codegen.json" =>
+          ProjectRoot(p.getParent.toFile)
+      }
+
+  def findCodegenScalaFiles(dir: File): fs2.Stream[IO,Path] =
+    fs2.io.file
+      .Files[IO]
+      .walk(dir.toPath)
+      .parEvalMapUnordered(maxConcurrent) { p =>
+        IO.blocking {
+          isCodgenFile(p) -> p
+        }
+      }
+      .filter(_._1)
+      .map(_._2)
+
+  def printHelp(args: Option[List[String]] = None): IO[ExitCode] = {
+    IO.blocking {
+      args.map{ a =>
+        println(s"a8-codegen does not support args = ${a.toList}")
+        println("")
+      }
+
+      val help =
+        s"""Accur8 Codegen Tool
+           |
+           |Usage: a8-codegen [ --help | --l-help | template1 | template2 ]
+           |
+           |Finds scala files in current directory with @CompanionGen and generates companion case classes
+           |
+           |  templateName
+           |
+           |  --help      shows help for a8-codegen
+           |
+           |  --l-help    shows the options for the app launcher (like how to update the app)
+         """.stripMargin
+      println(help)
+      if ( args.nonEmpty )
+        ExitCode.Error
+      else
+        ExitCode.Success
     }
   }
 
-  def findCodegenScalaFiles(dir: File): IndexedSeq[File] = {
-    dir.listFiles.flatMap {
-      case d if d.isDirectory =>
-        findCodegenScalaFiles(d)
-      case f if isCodgenFile(f) =>
-        IndexedSeq(f)
-      case _ =>
-        IndexedSeq.empty
-    }
-  }
 
-  def printHelp(args: Option[Array[String]] = None) = {
-
-    args.map{ a =>
-      println(s"a8-codegen does not support args = ${a.toList}")
-      println("")
-    }
-
-    val help =
-      s"""Accur8 Codegen Tool
-         |
-         |Usage: a8-codegen [ --help | --l-help | template1 | template2 ]
-         |
-         |Finds scala files in current directory with @CompanionGen and generates companion case classes
-         |
-         |  templateName
-         |
-         |  --help      shows help for a8-codegen
-         |
-         |  --l-help    shows the options for the app launcher (like how to update the app)
-       """.stripMargin
-    println(help)
-  }
-
-  def main(args: Array[String]): Unit = {
+  override def run(args: List[String]): IO[ExitCode] = {
 
     import sys.process._
 
     args match {
-      case Array() =>
+      case List() =>
         runCodeGen(new File("."))
-      case Array("--help") =>
+      case List("--help") =>
         printHelp()
-      case Array("--l-help") =>
-        "a8-codegen --l-help"!
+      case List("--l-help") =>
+        IO.blocking(
+          "a8-codegen --l-help"!
+        ).as(ExitCode.Success)
       case _ =>
         printHelp(Some(args))
     }
 
   }
 
-  def runCodeGen(dir: File): Unit =
+  sealed trait CodeGenResult
+  case class CodeGenSuccess(sourceFile: File, generatedFile: File) extends CodeGenResult
+  case class CodeGenFailure(sourceFile: Option[File], failure: Throwable) extends CodeGenResult
+
+
+  def runCodeGen(dir: File): IO[ExitCode] =
     findProjectRoots(dir)
-      .foreach(codeGenScalaFiles)
+      .parEvalMapUnordered(maxConcurrent) (pr =>
+        IO.delay(codeGenScalaFiles(pr))
+      )
+      .flatten
+      .evalMap { result =>
+        IO.blocking {
+          result match {
+            case CodeGenSuccess(sourceFile, generatedFile) =>
+              println(s"generated ${generatedFile.getCanonicalPath}")
+            case _ =>
+          }
+          result
+        }
+      }
+      .compile
+      .toList
+      .flatMap { results =>
+        val failures =
+          results
+            .collect {
+              case cgf: CodeGenFailure =>
+                cgf
+            }
+        if ( failures.isEmpty ) {
+          IO(ExitCode.Success)
+        } else {
+          IO.blocking {
+            failures.foreach { failure =>
+              println(s"failure generating ${failure.sourceFile.map(_.getAbsolutePath)}")
+              failure.failure.printStackTrace()
+            }
+          }.as(ExitCode.Success)
+        }
+      }
 
 
-  def codeGenScalaFiles(projectRoot: ProjectRoot): Unit = {
+  def codeGenScalaFiles(projectRoot: ProjectRoot): fs2.Stream[IO,CodeGenResult] = {
     val project = Project(projectRoot)
 
     val templateFactory = CodegenTemplate(project.config.template)
 
     println(s"finding scala files with @CompanionGen in ${projectRoot}")
-    val files = findCodegenScalaFiles(projectRoot.dir.toFile)
-    println(s"found ${files.size} scala files")
 
-    files
-      .foreach( file =>
-        templateFactory(file, project).run()
-      )
+    findCodegenScalaFiles(projectRoot.dir.toFile)
+      .parEvalMapUnordered(maxConcurrent) { scalaFile =>
+        templateFactory(scalaFile.toFile, project).run()
+      }
+
   }
-
-//  def codeGenScalaFiles(): Unit =
-//    codeGenScalaFiles(new File("."))
 
   def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
     // take care to generate all the code and then write the new file so we don't half write the file and then crash

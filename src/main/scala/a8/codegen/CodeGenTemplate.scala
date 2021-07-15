@@ -3,8 +3,12 @@ package a8.codegen
 
 import java.io.File
 import CommonOpsCopy._
+import a8.codegen.Codegen.{CodeGenFailure, CodeGenResult, CodeGenSuccess}
 import a8.codegen.CompanionGen.CompanionGenResolver
 import a8.codegen.FastParseTools.ParserConfig
+import cats.effect.IO
+
+import scala.util.control.NonFatal
 
 object CodegenTemplate {
 
@@ -39,16 +43,22 @@ trait CodegenTemplate {
       .companionGenResolver
       .resolve(caseClassName, file, sourceAnno, companionGenDefault)
 
-  def run(): Unit = {
-    println(s"reading ${file}")
-    val objectName: String = "Mx" + file.getName.split("\\.").take(1).head
-    val generatedFile = new java.io.File(file.getParentFile, "Mx" + file.getName)
-    println(s"writing ${generatedFile}")
-    Codegen.printToFile(generatedFile) { out =>
-      out.println(header)
-      out.println(s"object ${objectName} {")
-      out.println(generatedCaseClassCode.indent("  "))
-      out.println("}")
+  def run(): IO[CodeGenResult] = {
+    IO.blocking {
+      try {
+        val objectName: String = "Mx" + file.getName.split("\\.").take(1).head
+        val generatedFile = new java.io.File(file.getParentFile, "Mx" + file.getName)
+        Codegen.printToFile(generatedFile) { out =>
+          out.println(header)
+          out.println(s"object ${objectName} {")
+          out.println(generatedCaseClassCode.indent("  "))
+          out.println("}")
+        }
+        CodeGenSuccess(file, generatedFile)
+      } catch {
+        case NonFatal(th) =>
+          CodeGenFailure(Some(file), th)
+      }
     }
   }
 

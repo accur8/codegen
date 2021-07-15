@@ -8,14 +8,18 @@ import java.io.File
 import CommonOpsCopy._
 import a8.codegen.CodegenTemplate.TemplateFactory
 import a8.codegen.CompanionGen.CompanionGenResolver
+import cats.effect.{IO, IOApp}
 
 import scala.language.postfixOps
 
-object CodegenTemplate2 extends TemplateFactory {
+object CodegenTemplate2 extends TemplateFactory with IOApp.Simple {
 
-  def main(args: Array[String]): Unit = {
+
+  override def run: IO[Unit] = {
 //    Codegen.runCodeGen(new File("c:/Users/glen/code/accur8/composite"))
-    Codegen.runCodeGen(new File("/Users/glen/code/accur8/composite"))
+    Codegen
+      .runCodeGen(new File("/Users/glen/code/accur8/composite"))
+      .void
 //    Codegen.codeGenScalaFiles(ProjectRoot("/Users/glen/code/accur8/composite/sync"))
 //    Codegen.codeGenScalaFiles(ProjectRoot("/Users/glen/code/accur8/composite/wsjdbc"))
   }
