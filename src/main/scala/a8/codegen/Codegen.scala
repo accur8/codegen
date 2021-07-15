@@ -92,7 +92,6 @@ object Codegen extends IOApp {
 
 
   override def run(args: List[String]): IO[ExitCode] = {
-
     import sys.process._
 
     args match {
@@ -120,7 +119,7 @@ object Codegen extends IOApp {
       .parEvalMapUnordered(maxConcurrent) (pr =>
         IO.delay(codeGenScalaFiles(pr))
       )
-      .flatten
+      .parJoin(maxConcurrent)
       .evalMap { result =>
         IO.blocking {
           result match {
@@ -141,7 +140,9 @@ object Codegen extends IOApp {
                 cgf
             }
         if ( failures.isEmpty ) {
-          IO(ExitCode.Success)
+          IO.blocking {
+            println(s"SUCCESS")
+          }.as(ExitCode.Success)
         } else {
           IO.blocking {
             failures.foreach { failure =>
