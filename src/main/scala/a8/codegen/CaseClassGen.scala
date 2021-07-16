@@ -100,6 +100,8 @@ ${
 
 }
 
+implicit val catsEq: cats.Eq[${cc.name}] = cats.Eq.fromUniversalEquals
+
 lazy val generator: Generator[${cc.name},parameters.type] =  {
   val constructors = Constructors[${cc.name}](${caseClass.properties.size}, unsafe.iterRawConstruct)
   Generator(constructors, parameters)

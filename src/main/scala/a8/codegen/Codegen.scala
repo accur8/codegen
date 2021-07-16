@@ -148,6 +148,7 @@ object Codegen extends IOApp {
             failures.foreach { failure =>
               println(s"failure generating ${failure.sourceFile.map(_.getAbsolutePath)}")
               failure.failure.printStackTrace()
+              println(s"FAILURE")
             }
           }.as(ExitCode.Success)
         }
