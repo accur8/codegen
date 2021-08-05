@@ -26,7 +26,6 @@ object CompanionGen {
           .foldLeft(Anno()) { (anno, default) =>
             val absolutePath = file.toPath
             val relativePath = codeRoot.dir.relativize(absolutePath)
-            toString
             if ( default.matches(relativePath) ) {
               anno.merge(default.resolvedAnno)
             } else {

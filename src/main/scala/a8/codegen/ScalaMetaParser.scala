@@ -18,8 +18,6 @@ object ScalaMetaParser {
 
     val allCaseClassDefs = visit(source)
 
-    toString
-
     val caseClasses: Iterable[CaseClass] =
       allCaseClassDefs
         .filter(generateCodeFor)
