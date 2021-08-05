@@ -4,7 +4,6 @@ package a8.codegen
 import a8.codegen.CaseClassAst.CaseClass
 import a8.codegen.CodegenTemplate.TemplateFactory
 import a8.codegen.CommonOpsCopy._
-import a8.codegen.FastParseTools.Source
 import cats.effect.{IO, IOApp}
 
 import java.io.File
@@ -40,7 +39,7 @@ case class CodegenTemplate2(file: java.io.File, project: Project) extends Codege
   lazy val previousGeneratedSourceCode =
     if ( generatedFile.exists() ) {
       val s = scala.io.Source.fromFile(generatedFile)
-      val gf = s.getLines.mkString("\n")
+      val gf = s.getLines().mkString("\n")
       s.close()
       gf
     } else {
@@ -53,12 +52,11 @@ case class CodegenTemplate2(file: java.io.File, project: Project) extends Codege
 //  val sourceCode = scala.io.Source.fromFile("model/shared/src/main/scala/a8/manna/model/Tester2.scala").mkString
   lazy val sourceCode = {
     val s = scala.io.Source.fromFile(file)
-    val sc = s.getLines.mkString("\n")
+    val sc = s.getLines().mkString("\n")
     s.close()
     sc
   }
 
-  lazy val sourceFile = FastParseTools.parse(Source(sourceCode, file.getPath), parser.SourceFile)
   lazy val sf = sourceFile
 
   lazy val header = s"""package ${sourceFile.pakkage}

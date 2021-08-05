@@ -2,10 +2,11 @@ package a8.codegen
 
 
 import java.io.File
+
 import CommonOpsCopy._
+import a8.codegen.CaseClassAst.{CaseClassName, SourceFile}
 import a8.codegen.Codegen.{CodeGenFailure, CodeGenResult, CodeGenSuccess}
 import a8.codegen.CompanionGen.CompanionGenResolver
-import a8.codegen.FastParseTools.ParserConfig
 import cats.effect.IO
 
 import scala.util.control.NonFatal
@@ -35,10 +36,9 @@ trait CodegenTemplate {
   val header: String
   val file: File
 
+  lazy val sourceFile: SourceFile = ScalaMetaParser.parseSourceFile(file, resolveCompanionGen)
 
-  lazy val parser = new CaseClassParser(file, resolveCompanionGen)(ParserConfig(true))
-
-  def resolveCompanionGen(caseClassName: String, sourceAnno: a8.codegen.ProjectConfig.Anno): CompanionGen =
+  def resolveCompanionGen(caseClassName: CaseClassName, sourceAnno: a8.codegen.ProjectConfig.Anno): CompanionGen =
     project
       .companionGenResolver
       .resolve(caseClassName, file, sourceAnno, companionGenDefault)

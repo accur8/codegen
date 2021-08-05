@@ -1,10 +1,11 @@
 package a8.codegen
 
 import com.sun.tools.javac.file.RelativePath
-
 import java.io.File
 import java.nio.file.{FileSystem, FileSystems, Path, PathMatcher}
+
 import MoreOps._
+import a8.codegen.CaseClassAst.CaseClassName
 import a8.codegen.ProjectConfig.Anno
 
 object CompanionGen {
@@ -18,7 +19,7 @@ object CompanionGen {
 
   case class CompanionGenResolver(codeRoot: ProjectRoot, projectConfig: ProjectConfig) {
 
-    def resolve(caseClassName: String, file: java.io.File, annotations: Anno, defaultCompanionGen: CompanionGen): CompanionGen = {
+    def resolve(caseClassName: CaseClassName, file: java.io.File, annotations: Anno, defaultCompanionGen: CompanionGen): CompanionGen = {
       val resolvedAnno =
         projectConfig
           .defaults

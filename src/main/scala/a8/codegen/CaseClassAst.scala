@@ -2,20 +2,21 @@ package a8.codegen
 
 object CaseClassAst {
 
+  case class PackageName(value: String) {
+    override def toString: String = value
+  }
+  case class CaseClassName(value: String) {
+    override def toString: String = value
+  }
 
   case class SourceFile(
-    pakkage: String,
-    imports: Iterable[Import],
+    pakkage: PackageName,
     caseClasses: Iterable[CaseClass]
-  )
-
-  case class Import(
-    name: String
   )
 
   case class CaseClass(
     file: java.io.File,
-    name: String,
+    name: CaseClassName,
     properties: Iterable[Property],
     companionGen: CompanionGen,
     annotations: Iterable[Annotation],
@@ -25,8 +26,11 @@ object CaseClassAst {
 
   case class Annotation(
     name: String,
-    parms: Iterable[AnnotationParm]
-  )
+    parms: Iterable[AnnotationParm] = Iterable.empty
+  ) {
+    def append(parm: AnnotationParm): Annotation =
+      copy(parms = parms ++ Some(parm))
+  }
 
   case class AnnotationParm(
     name: String,

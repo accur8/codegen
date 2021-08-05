@@ -1,7 +1,6 @@
 package a8.codegen
 
 import a8.codegen.CaseClassAst.CaseClass
-import a8.codegen.FastParseTools.{ParserConfig, Source}
 
 import java.io.{File, StringWriter}
 import CommonOpsCopy._
@@ -169,7 +168,7 @@ object Codegen extends IOApp {
 
   }
 
-  def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
+  def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) = {
     // take care to generate all the code and then write the new file so we don't half write the file and then crash
     val sw = new StringWriter()
     val p = new java.io.PrintWriter(sw)
@@ -189,7 +188,7 @@ object Codegen extends IOApp {
   def loadFileContents(f: File): Option[String] = {
     val source = scala.io.Source.fromFile(f)
     try {
-      Some(source.getLines.mkString("\n"))
+      Some(source.getLines().mkString("\n"))
     } catch {
       case e: Exception =>
         println(s"error processing ${f}")

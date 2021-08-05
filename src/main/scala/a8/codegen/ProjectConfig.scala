@@ -44,6 +44,9 @@ object ProjectConfig {
     values: Map[String,Boolean] = Map.empty
   ) {
 
+    def append(t: (String,Boolean)): Anno =
+      copy(values + t)
+
     def merge(right: Anno) = {
       Anno(this.values ++ right.values)
     }

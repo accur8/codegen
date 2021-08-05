@@ -19,7 +19,7 @@
 // 
 //      
 
-val scalaLibVersion = "2.12.12"
+val scalaLibVersion = "2.13.6"
 
 scalacOptions in Global ++= Seq("-deprecation", "-unchecked", "-feature")
 
@@ -45,7 +45,7 @@ lazy val codegen =
     .jvmProject("a8-codegen", file("."), "codegen")
     .settings(
       libraryDependencies ++= Seq(
-        "com.lihaoyi" %% "fastparse" % "0.4.4",
+        "org.scalameta" %% "scalameta" % "4.4.25",
         "io.circe" %% "circe-core" % "0.14.1",
         "io.circe" %% "circe-generic" % "0.14.1",
         "io.circe" %% "circe-parser" % "0.14.1",

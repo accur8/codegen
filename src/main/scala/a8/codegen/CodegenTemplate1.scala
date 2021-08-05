@@ -4,7 +4,6 @@ package a8.codegen
 import a8.codegen.CaseClassAst.CaseClass
 import a8.codegen.CodegenTemplate.TemplateFactory
 import a8.codegen.CommonOpsCopy._
-import a8.codegen.FastParseTools.Source
 import a8.codegen.MoreOps._
 
 import scala.language.postfixOps
@@ -34,12 +33,12 @@ case class CodegenTemplate1(file: java.io.File, project: Project)
 //  val sourceCode = scala.io.Source.fromFile("model/shared/src/main/scala/a8/manna/model/Tester2.scala").mkString
   lazy val sourceCode = {
     val s = scala.io.Source.fromFile(file)
-    val sc = s.getLines.mkString("\n")
+    val sc = s.getLines().mkString("\n")
     s.close()
     sc
   }
   //====
-  lazy val sourceFile = FastParseTools.parse(Source(sourceCode, file.getPath), parser.SourceFile)
+
   lazy val sf = sourceFile
 
   lazy val header = s"""package ${sourceFile.pakkage}
@@ -70,6 +69,14 @@ ${manualImports.mkString("\n")}
   case class CaseClassGen(cc: CaseClass) {
 
     lazy val props = cc.properties
+
+    lazy val nonEmptyProps =
+      props.isEmpty match {
+        case true =>
+          Some(props)
+        case false =>
+          None
+      }
 
     lazy val jsonFieldReads: String =
       props
@@ -209,9 +216,9 @@ ${unsafeBody}
 
 lazy val allLenses = List(${props.map(p => s"lenses.${p.nameAsVal}").mkString(",")})
 
-lazy val allLensesHList = ${props.toNonEmpty.map(_.map(p => s"lenses.${p.nameAsVal}").mkString("", " :: ", " :: ")).getOrElse("") + "shapeless.HNil"}
+lazy val allLensesHList = ${nonEmptyProps.map(_.map(p => s"lenses.${p.nameAsVal}").mkString("", " :: ", " :: ")).getOrElse("") + "shapeless.HNil"}
 
-lazy val allParametersHList = ${props.toNonEmpty.map(_.map(p => s"parameters.${p.nameAsVal}").mkString("", " :: ", " :: ")).getOrElse("") + "shapeless.HNil"}
+lazy val allParametersHList = ${nonEmptyProps.map(_.map(p => s"parameters.${p.nameAsVal}").mkString("", " :: ", " :: ")).getOrElse("") + "shapeless.HNil"}
 
 lazy val typeName = "${cc.name}"
 

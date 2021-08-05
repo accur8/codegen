@@ -3,7 +3,6 @@ package a8.codegen
 import java.io.{PrintWriter, StringWriter}
 import java.util.regex.Pattern
 
-import scala.collection.TraversableLike
 import scala.reflect.ClassTag
 
 object CommonOpsCopy
@@ -12,7 +11,7 @@ object CommonOpsCopy
 
 trait CommonOpsCopy {
 
-  implicit class IterableOps[A, B <: Traversable[A]](xs: B with TraversableLike[A, B]) {
+  implicit class IterableOps[A, B <: Iterable[A]](xs: B) {
     def toNonEmpty: Option[B] =
       if ( xs.nonEmpty ) Some(xs)
       else None
@@ -30,7 +29,7 @@ trait CommonOpsCopy {
       result
     }
 
-    def quoted = '\"' + s + '\"'
+    def quoted = '\"'.toString + s + '\"'.toString
 
     def asBlankOpt: Option[String] =
       if ( s.trim.length == 0 ) None

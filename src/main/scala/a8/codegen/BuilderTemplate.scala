@@ -111,7 +111,7 @@ object BuilderTemplate {
           .find(_.name == "QubesAnno")
           .map { anno =>
             QubesAnno(
-              cube = anno.parms.find(_.name == "cube").map(_.value).getOrElse('"' + caseClass.name + '"'),
+              cube = anno.parms.find(_.name == "cube").map(_.value).getOrElse('"'.toString + caseClass.name + '"'.toString),
               appSpace = anno.parms.find(_.name == "appSpace").map(_.value).getOrElse(sys.error("""must supply @QubesAnno(appSpace = "foo") i.e. appSpace annotation field is required""")),
             )
           }

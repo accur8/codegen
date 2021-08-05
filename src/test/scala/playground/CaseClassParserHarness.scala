@@ -1,13 +1,17 @@
 package playground
 
-import a8.codegen.{CaseClassParser, CompanionGen, FastParseTools}
-import a8.codegen.FastParseTools.{ParserConfig, Source}
+import a8.codegen.CompanionGen
 
 import java.io.File
 
 object CaseClassParserHarness extends App {
 
-  val sourceCode =
+  lazy val sourceCode = sourceCode0
+
+  lazy val sourceCode0 =
+    """package a8.remoteapi.api"""
+
+  lazy val sourceCode1 =
     """package a8.remoteapi.api
 
 import fs2.{Chunk, Pipe}
@@ -264,10 +268,10 @@ object protocol {
       """.trim
 
   val file = new File(".")
-  lazy val parser = new CaseClassParser(file, (_,_) => CompanionGen.empty)(ParserConfig(true))
-
-  lazy val sourceFile = FastParseTools.parse(Source(sourceCode, file.getPath), parser.SourceFile)
-
-  sourceFile.toString
+//  lazy val parser = new CaseClassParser(file, (_,_) => CompanionGen.empty)(ParserConfig(true))
+//
+//  lazy val sourceFile = ParserTools.parse(Source(sourceCode, file.getPath), parser.Package)
+//
+//  sourceFile.toString
 
 }
