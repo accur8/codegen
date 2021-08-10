@@ -77,15 +77,15 @@ ${manualImports.mkString("\n")}
 
 """
 
-  case class CaseClassGen(cc: CaseClass) {
+  case class CaseClassGen(caseClass: CaseClass) {
 
-    lazy val props: Iterable[CaseClassAst.Property] = cc.properties
+    lazy val props: Iterable[CaseClassAst.Property] = caseClass.properties
 
     lazy val parametersBody: String =
       props
         .zipWithIndex
         .map { case (prop, ordinal) =>
-          s"lazy val ${prop.nameAsVal}: CaseClassParm[${cc.name},${prop.typeName}] = CaseClassParm[${cc.name},${prop.typeName}](${prop.nameAsStringLit}, _.${prop.nameAsVal}, (d,v) => d.copy(${prop.nameAsVal} = v), ${prop.defaultExpr.map("()=> " + _)}, ${ordinal})"
+          s"lazy val ${prop.nameAsVal}: CaseClassParm[${caseClass.name},${prop.typeName}] = CaseClassParm[${caseClass.name},${prop.typeName}](${prop.nameAsStringLit}, _.${prop.nameAsVal}, (d,v) => d.copy(${prop.nameAsVal} = v), ${prop.defaultExpr.map("()=> " + _)}, ${ordinal})"
         }
         .mkString("\n")
 
@@ -93,8 +93,8 @@ ${manualImports.mkString("\n")}
       s"""
 object unsafe {
 
-  def rawConstruct(values: IndexedSeq[Any]): ${cc.name} = {
-    ${cc.name}(
+  def rawConstruct(values: IndexedSeq[Any]): ${caseClass.name} = {
+    ${caseClass.name}(
 ${
         props
           .zipWithIndex
@@ -106,9 +106,9 @@ ${
 }
     )
   }
-  def iterRawConstruct(values: Iterator[Any]): ${cc.name} = {
+  def iterRawConstruct(values: Iterator[Any]): ${caseClass.name} = {
     val value =
-      ${cc.name}(
+      ${caseClass.name}(
 ${
         props
           .map { prop =>
@@ -122,25 +122,47 @@ ${
        sys.error("")
     value
   }
-  def typedConstruct(${props.map(p => s"${p.nameAsVal}: ${p.typeName}").mkString(", ")}): ${cc.name} =
-    ${cc.name}(${props.map(_.nameAsVal).mkString(", ")})
+  def typedConstruct(${props.map(p => s"${p.nameAsVal}: ${p.typeName}").mkString(", ")}): ${caseClass.name} =
+    ${caseClass.name}(${props.map(_.nameAsVal).mkString(", ")})
 
 }
 """
+
+    lazy val typePerKey = {
+
+      val result =
+        caseClass
+          .primaryKey
+          .filter(_.typeName.name.endsWith(".Uid"))
+          .map { pk =>
+            List(
+              "\n\n",
+              s"type Uid = Tid[${caseClass.name}]",
+              s"val Uid = new Tid.Generator[${caseClass.name}]",
+            ).mkString("\n")
+          }
+          .getOrElse("")
+
+      result
+
+    }
 
     lazy val bareBody = s"""
 
 ${
       BuilderTemplate
         .templates
-        .flatMap(_.build(cc))
+        .flatMap(_.build(caseClass))
         .mkString("\n\n")
+}${
+
+      typePerKey
 }
 
-implicit val catsEq: cats.Eq[${cc.name}] = cats.Eq.fromUniversalEquals
+implicit val catsEq: cats.Eq[${caseClass.name}] = cats.Eq.fromUniversalEquals
 
-lazy val generator: Generator[${cc.name},parameters.type] =  {
-  val constructors = Constructors[${cc.name}](${props.size}, unsafe.iterRawConstruct)
+lazy val generator: Generator[${caseClass.name},parameters.type] =  {
+  val constructors = Constructors[${caseClass.name}](${props.size}, unsafe.iterRawConstruct)
   Generator(constructors, parameters)
 }
 
@@ -150,12 +172,12 @@ ${parametersBody.indent("  ")}
 
 ${unsafeBody}
 
-lazy val typeName = "${cc.name}"
+lazy val typeName = "${caseClass.name}"
 
 """
 
     lazy val body = s"""
-trait Mx${cc.name} {
+trait Mx${caseClass.name} {
 
 ${bareBody.trim.indent("  ")}
 

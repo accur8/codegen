@@ -21,7 +21,13 @@ object CaseClassAst {
     companionGen: CompanionGen,
     annotations: Iterable[Annotation],
   ) {
-    val qualifiedName = file.getCanonicalPath
+
+    lazy val qualifiedName = file.getCanonicalPath
+
+    lazy val primaryKey: Option[Property] =
+      properties
+        .find(_.annotations.exists(_.name == "PK"))
+
   }
 
   case class Annotation(
@@ -43,7 +49,13 @@ object CaseClassAst {
     defaultExpr: Option[String],
     annotations: Iterable[Annotation],
   ) {
-    val nameAsVal: String = rawName
+    val nameAsVal: String =
+      rawName match {
+        case "type" =>
+          "`type`"
+        case s =>
+          s
+      }
     val nameAsStringLit: String = {
       val s =
         if ( rawName.startsWith("`") )
