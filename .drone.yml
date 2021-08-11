@@ -7,9 +7,9 @@ steps:
 
 - name: build
   commands:
-   - sbt -Djline.terminal=jline.UnsupportedTerminal clean compile test:compile
+   - sbt11 -Djline.terminal=jline.UnsupportedTerminal clean compile test:compile
 
 - name: test
   commands:
-   - sbt -Djline.terminal=jline.UnsupportedTerminal clean test
+   - sbt11 -Djline.terminal=jline.UnsupportedTerminal clean test
 
