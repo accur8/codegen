@@ -4,6 +4,12 @@ type: exec
 name: default
 
 steps:
-- name: greeting
+
+- name: build
   commands:
-  - echo hello world
+   - sbt -Djline.terminal=jline.UnsupportedTerminal clean compile test:compile
+
+- name: test
+  commands:
+   - sbt -Djline.terminal=jline.UnsupportedTerminal clean test
+
