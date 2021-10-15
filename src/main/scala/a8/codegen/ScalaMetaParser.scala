@@ -29,7 +29,7 @@ object ScalaMetaParser {
             ccd.parms.map { parm =>
               CaseClassAst.Property(
                 parm.name,
-                CaseClassAst.TypeName(parm.tipe),
+                CaseClassAst.TypeName.parse(parm.tipe),
                 parm.default,
                 parm.annotations,
               )
@@ -142,8 +142,12 @@ object ScalaMetaParser {
               )
             )
           case t =>
-            warn(s"ignoring term in anno ${t.syntax}")
-            anno
+            anno.append(
+              AnnotationParm(
+                "",
+                t.syntax.trim
+              )
+            )
         }
       }
   }

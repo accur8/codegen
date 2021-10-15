@@ -1,7 +1,7 @@
 package a8.codegen
 
 
-import a8.codegen.CaseClassAst.{Annotation, CaseClass, Property}
+import a8.codegen.CaseClassAst.{Annotation, CaseClass, Property, TypeName}
 import CommonOpsCopy._
 
 object BuilderTemplate {

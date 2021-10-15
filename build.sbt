@@ -45,6 +45,7 @@ lazy val codegen =
     .jvmProject("a8-codegen", file("."), "codegen")
     .settings(
       libraryDependencies ++= Seq(
+        "org.typelevel" %% "cats-parse" % "0.3.4",
         "org.scalameta" %% "scalameta" % "4.4.25",
         "io.circe" %% "circe-core" % "0.14.1",
         "io.circe" %% "circe-generic" % "0.14.1",

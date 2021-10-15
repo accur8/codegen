@@ -15,7 +15,8 @@ object CodegenTemplate2 extends TemplateFactory with IOApp.Simple {
   override def run: IO[Unit] = {
 //    Codegen.runCodeGen(new File("c:/Users/glen/code/accur8/composite"))
     Codegen
-      .runCodeGen(new File("/Users/glen/code/accur8/composite"))
+      .runCodeGen(new File("/Users/glen/code/accur8/odin"))
+//      .runCodeGen(new File("/Users/glen/code/accur8/composite"))
       .void
 //    Codegen.codeGenScalaFiles(ProjectRoot("/Users/glen/code/accur8/composite/sync"))
 //    Codegen.codeGenScalaFiles(ProjectRoot("/Users/glen/code/accur8/composite/wsjdbc"))
@@ -133,7 +134,7 @@ ${
       val result =
         caseClass
           .primaryKey
-          .filter(_.typeName.name.endsWith(".Uid"))
+          .filter(_.typeName.fullName.endsWith(".Uid"))
           .map { pk =>
             List(
               "\n\n",

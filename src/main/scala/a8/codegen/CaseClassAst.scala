@@ -69,10 +69,46 @@ object CaseClassAst {
       nameAsVal + ": " + typeName + defaultExpr.map(" = " + _).getOrElse("")
   }
 
-  case class TypeName(name: String, args: Iterable[TypeName] = Nil) {
-    def isOption = name == "Option"
-    override def toString =
-      name + (if ( args.nonEmpty ) ("[" + args.map(_.toString).mkString(",") + "]") else "")
+  object TypeName {
+
+    def apply(rawTypeName: String): TypeName =
+      parse(rawTypeName)
+
+    def parse(rawTypeName: String): TypeName = {
+      TypeNameParser.parser.parseAll(rawTypeName) match {
+        case Left(error) =>
+          sys.error(s"error parsing type name ${rawTypeName} -- ${error}")
+        case Right(tn) =>
+          tn
+      }
+    }
+
+    case class TupleTypeName(args: Iterable[TypeName]) extends TypeName {
+      override def isOption: Boolean = false
+      override def fullName: String =
+        args.mkString("(", ",", ")")
+    }
+
+    case class RegularTypeName(name: String, args: Iterable[TypeName]) extends TypeName {
+      override def isOption: Boolean = name == "Option"
+      override def fullName: String = {
+        args.isEmpty match {
+          case true =>
+            name
+          case false =>
+            name + args.mkString("[", ",", "]")
+        }
+      }
+    }
+
   }
+
+  sealed trait TypeName {
+    def args: Iterable[TypeName]
+    def fullName: String
+    def isOption: Boolean
+    override def toString: String = fullName
+  }
+
 
 }

@@ -70,13 +70,14 @@ ${manualImports.mkString("\n")}
 
     lazy val props = cc.properties
 
-    lazy val nonEmptyProps =
+    lazy val nonEmptyProps: Option[Iterable[CaseClassAst.Property]] = {
       props.isEmpty match {
         case true =>
-          Some(props)
-        case false =>
           None
+        case false =>
+          Some(props)
       }
+    }
 
     lazy val jsonFieldReads: String =
       props
@@ -193,6 +194,19 @@ ${
 
 }
 """
+    lazy val rpcHandler =
+      s"""
+  implicit val rpcHandler: a8.remoteapi.RpcHandler[${cc.name}] = {
+    import a8.remoteapi.RpcHandler.RpcParm
+    a8.remoteapi.RpcHandler(
+      Vector(
+${cc.properties.map(p => s"          RpcParm(parameters.${p.nameAsVal}),").mkString("        \n")}
+      ),
+      unsafe.rawConstruct,
+    )
+  }
+
+"""
 
     lazy val bareBody = s"""
 ${
@@ -204,6 +218,12 @@ lazy val jsonFormat = JsonAssist.utils.lazyFormat(Format(jsonReads, jsonWrites))
 """
     else
       ""
+}
+${
+      if (cc.companionGen.rpcHandler)
+        rpcHandler.trim
+      else
+        ""
 }
 object lenses {
 ${lensesBody.indent("  ")}
@@ -224,7 +244,7 @@ lazy val typeName = "${cc.name}"
 
 """
 
-    lazy val body = s"""
+      lazy val body = s"""
 trait Mx${cc.name} {
 
 ${bareBody.trim.indent("  ")}
