@@ -5,6 +5,7 @@ import a8.codegen.CaseClassAst.CaseClass
 import java.io.{File, StringWriter}
 import CommonOpsCopy._
 import a8.codegen.CompanionGen.CompanionGenResolver
+import a8.codegen.MoreOps.FileOps
 import cats.effect.{ExitCode, IO, IOApp}
 
 import java.nio.file.{FileVisitOption, Path}
@@ -34,20 +35,47 @@ object Codegen extends IOApp {
     }
   }
 
-  def findProjectRoots(dir: File): fs2.Stream[IO,ProjectRoot] =
-    fs2.io.file
-      .Files[IO]
-      .walk(dir.toPath, Seq(FileVisitOption.FOLLOW_LINKS))
-//      .evalMap { f =>
-//        IO.blocking {
-//          println(f)
-//          f
-//        }
-//      }
-      .collect {
-        case p if p.toFile.getName == "codegen.json" =>
-          ProjectRoot(p.getParent.toFile)
+  def loadCodegenJson(dir: File, searchParent: Boolean): Option[Project] = {
+    val codegenDotJsonFile = new File(dir, "codegen.json")
+    val parent = dir.getParentFile
+    if ( codegenDotJsonFile.exists() ) {
+      val jsonStr = codegenDotJsonFile.readText
+      import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
+      decode[ProjectConfig](jsonStr) match {
+        case Left(th) =>
+          throw new RuntimeException(s"error parsing ${codegenDotJsonFile} -- ${th.getMessage}")
+        case Right(cfg) =>
+          Some(Project(ProjectRoot(dir), dir, codegenDotJsonFile, cfg))
       }
+    } else if ( parent != null && searchParent ) {
+      loadCodegenJson(parent, searchParent)
+    } else {
+      None
+    }
+  }
+
+  def findProjectRoots(dir: File): fs2.Stream[IO,Project] = {
+    val stream: fs2.Stream[IO, Option[Project]] =
+      loadCodegenJson(dir, true) match {
+        case Some(project) =>
+          fs2.Stream(Some(project.copy(searchRoot = dir))).covary[IO]
+        case None =>
+          fs2.io.file
+            .Files[IO]
+            .walk(dir.toPath, Seq(FileVisitOption.FOLLOW_LINKS))
+            //      .evalMap { f =>
+            //        IO.blocking {
+            //          println(f)
+            //          f
+            //        }
+            //      }
+            .collect {
+              case p if p.toFile.getName == "codegen.json" =>
+                loadCodegenJson(p.toFile, false)
+            }
+      }
+    stream.flatMap(o => fs2.Stream.iterable(o))
+  }
 
   def findCodegenScalaFiles(dir: File): fs2.Stream[IO,Path] =
     fs2.io.file
@@ -154,14 +182,13 @@ object Codegen extends IOApp {
       }
 
 
-  def codeGenScalaFiles(projectRoot: ProjectRoot): fs2.Stream[IO,CodeGenResult] = {
-    val project = Project(projectRoot)
+  def codeGenScalaFiles(project: Project): fs2.Stream[IO,CodeGenResult] = {
 
     val templateFactory = CodegenTemplate(project.config.template)
 
-    println(s"finding scala files with @CompanionGen in ${projectRoot}")
+    println(s"processing scala files with @CompanionGen in ${project.searchRoot.getCanonicalPath} using config ${project.configFile.getCanonicalPath}")
 
-    findCodegenScalaFiles(projectRoot.dir.toFile)
+    findCodegenScalaFiles(project.searchRoot)
       .parEvalMapUnordered(maxConcurrent) { scalaFile =>
         templateFactory(scalaFile.toFile, project).run()
       }

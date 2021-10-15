@@ -19,13 +19,15 @@ object CompanionGen {
 
   case class CompanionGenResolver(codeRoot: ProjectRoot, projectConfig: ProjectConfig) {
 
+    lazy val canonicalCodeRoot = codeRoot.dir.toFile.getCanonicalFile.toPath
+
     def resolve(caseClassName: CaseClassName, file: java.io.File, annotations: Anno, defaultCompanionGen: CompanionGen): CompanionGen = {
       val resolvedAnno =
         projectConfig
           .defaults
           .foldLeft(Anno()) { (anno, default) =>
-            val absolutePath = file.toPath
-            val relativePath = codeRoot.dir.relativize(absolutePath)
+            val absolutePath = file.getCanonicalFile.toPath
+            val relativePath = canonicalCodeRoot.relativize(absolutePath)
             if ( default.matches(relativePath) ) {
               anno.merge(default.resolvedAnno)
             } else {
