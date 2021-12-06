@@ -37,6 +37,7 @@ object Codegen extends IOApp {
 
   def loadCodegenJson(dir: File, searchParent: Boolean): Option[Project] = {
     val codegenDotJsonFile = new File(dir, "codegen.json")
+    val s = dir.getCanonicalPath
     val parent = dir.getParentFile
     if ( codegenDotJsonFile.exists() ) {
       val jsonStr = codegenDotJsonFile.readText

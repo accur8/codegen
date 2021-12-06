@@ -49,23 +49,36 @@ object BuilderTemplate {
           .find(_.name == "SqlTable")
           .map(_.parms.head.value)
 
-      def primaryKey(caseClass: CaseClass): Option[Property] =
+      def primaryKeys(caseClass: CaseClass): List[Property] =
         caseClass
           .properties
-          .find(_.annotations.exists(_.name == "PK"))
+          .filter(_.annotations.exists(_.name == "PK"))
+          .toList
+
+      def primaryKeyLine(caseClass: CaseClass): Option[String] = {
+        primaryKeys(caseClass) match {
+          case Nil =>
+            None
+          case List(pk) =>
+            Some(s".singlePrimaryKey(_.${pk.nameAsVal})")
+          case l =>
+            Some(s".compositePrimaryKey${l.size}(s => (${l.map(k => s"s.${k.nameAsVal}").mkString(",")}))")
+        }
+        //          .getOrElse(sys.error(s"must supply PK on ${caseClass.name}"))
+      }
 
       override def resolveTypeClassName(caseClass: CaseClass): String = {
-        primaryKey(caseClass) match {
-          case Some(pk) =>
-            s"a8.shared.jdbcf.mapper.KeyedMapper[${caseClass.name},${pk.typeName}]"
-          case None =>
+        primaryKeys(caseClass) match {
+          case Nil =>
             super.resolveTypeClassName(caseClass)
+          case List(pk) =>
+            s"a8.shared.jdbcf.mapper.KeyedMapper[${caseClass.name},${pk.typeName}]"
+          case l =>
+            s"a8.shared.jdbcf.mapper.KeyedMapper[${caseClass.name},(${l.map(_.typeName).mkString(",")})]"
         }
       }
 
       override def rawBuild(caseClass: CaseClass, includeBuildCall: Boolean = true): String = {
-
-        val primaryKeyField = primaryKey(caseClass)
 
         val tableName =
         sqlTableAnno(caseClass)
@@ -75,10 +88,10 @@ object BuilderTemplate {
 
         val base = super.rawBuild(caseClass, false)
         val suffix =
-          primaryKeyField match {
-            case Some(pkf) =>
+          primaryKeyLine(caseClass) match {
+            case Some(pkl) =>
               List(
-                s".singlePrimaryKey(_.${pkf.nameAsVal})",
+                pkl,
                 ".buildKeyedMapper"
               )
             case None =>
@@ -102,8 +115,21 @@ object BuilderTemplate {
       case class QubesAnno(cube: String, appSpace: String)
 
       override def resolveTypeClassName(caseClass: CaseClass): String = {
-        s"a8.sync.qubes.QubesKeyedMapper[${caseClass.name},${primaryKey(caseClass).typeName}]"
+        primaryKeys(caseClass) match {
+          case Nil =>
+            sys.error("@PK is required")
+          case List(pk) =>
+            s"a8.sync.qubes.QubesKeyedMapper[${caseClass.name},${pk.typeName}]"
+          case l =>
+            s"a8.sync.qubes.QubesKeyedMapper[${caseClass.name},(${l.map(_.typeName).mkString(",")})]"
+        }
       }
+
+      def primaryKeys(caseClass: CaseClass): List[Property] =
+        caseClass
+          .properties
+          .filter(_.annotations.exists(_.name == "PK"))
+          .toList
 
       def qubesAnno(caseClass: CaseClass): QubesAnno =
         caseClass
@@ -117,23 +143,28 @@ object BuilderTemplate {
           }
           .getOrElse(sys.error(s"""for qubesMapper minimally the @QubesAnno(appSpace = "foo") is required for every class marked with @CompanionGen() on ${caseClass.qualifiedName}"""))
 
-      def primaryKey(caseClass: CaseClass): Property =
-        caseClass
-          .properties
-          .find(_.annotations.exists(_.name == "PK"))
-          .getOrElse(sys.error(s"must supply PK on ${caseClass.name}"))
+      def primateKeyLine(caseClass: CaseClass): String = {
+        primaryKeys(caseClass) match {
+          case Nil =>
+            sys.error(s"must supply PK on ${caseClass.name}")
+          case List(pk) =>
+            s".singlePrimaryKey(_.${pk.nameAsVal})"
+          case l =>
+            s".compositePrimaryKey${l.size}(s => (${l.map(k => s"s.${k.nameAsVal}").mkString(",")}))"
+        }
+//          .getOrElse(sys.error(s"must supply PK on ${caseClass.name}"))
+      }
 
       override def rawBuild(caseClass: CaseClass, includeBuildCall: Boolean = true): String = {
 
         val qa = qubesAnno(caseClass)
-        val pk = primaryKey(caseClass)
 
         val base = super.rawBuild(caseClass, false)
         val suffix =
           List(
             s".cubeName(${qa.cube})",
             s".appSpace(${qa.appSpace})",
-            s".singlePrimaryKey(_.${pk.nameAsVal})",
+            s"${primateKeyLine(caseClass)}",
             ".build",
           )
 
