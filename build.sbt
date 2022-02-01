@@ -4,40 +4,33 @@
 // 
 // This file is generated from modules.conf using `a8-versions build_dot_sbt`
 // 
-// It was generated at 2020-11-04 13:46:48.189 -0500 by glen on mini
+// It was generated at 2022-01-31T20:02:25.348737800 by glen on fullfillment
 // 
 // a8-versions build/versioning info follows
 // 
-//        build_java_version : 1.8.0_111
-//        build_os : Mac OS X
-//        build_machine_ip : 127.0.0.1
-//        build_user : flow
-//        build_date : Thu Oct 22 11:18:48 EDT 2020
-//        version_number : 1.0.0-20201022_1118_master
-//        build_machine : Flow-9.local
-//        project_name : a8-versions
+// 
 // 
 //      
+
+val appVersion = a8.sbt_a8.versionStamp(file("."))
 
 val scalaLibVersion = "2.13.6"
 
 scalacOptions in Global ++= Seq("-deprecation", "-unchecked", "-feature")
 
-resolvers in Global += "a8-repo" at Common.readRepoUrl()
 
-publishTo in Global := Some("a8-repo-releases" at Common.readRepoUrl())
+publishTo in Global := sonatypePublishToBundle.value
+credentials in Global += Credentials(Path.userHome / ".sbt" / "sonatype.credentials")
 
 scalaVersion in Global := scalaLibVersion
 
-organization in Global := "a8"
+organization in Global := "io.accur8"
 
-version in Global := a8.sbt_a8.versionStamp(file("."))
+version in Global := appVersion
+
+versionScheme in Global := Some("strict")
 
 serverConnectionType in Global := ConnectionType.Local
-
-bloopAggregateSourceDependencies in Global := true
-
-bloopExportJarClassifiers in Global := Some(Set("sources"))
 
 
 lazy val codegen =
@@ -50,7 +43,7 @@ lazy val codegen =
         "io.circe" %% "circe-core" % "0.14.1",
         "io.circe" %% "circe-generic" % "0.14.1",
         "io.circe" %% "circe-parser" % "0.14.1",
-        "co.fs2" %% "fs2-io" % "3.0.2"
+        "co.fs2" %% "fs2-io" % "3.0.2",
       )
     )
 

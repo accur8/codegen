@@ -6,3 +6,6 @@ out
 .idea
 .bloop
 .bsp
+.metals
+.envrc
+.direnv

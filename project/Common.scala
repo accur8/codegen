@@ -3,18 +3,11 @@
 // 
 // This file is generated from modules.conf using `a8-versions build_dot_sbt`
 // 
-// It was generated at 2020-11-04 13:46:48.571 -0500 by glen on mini
+// It was generated at 2022-01-31T20:02:25.352738200 by glen on fullfillment
 // 
 // a8-versions build/versioning info follows
 // 
-//        build_java_version : 1.8.0_111
-//        build_os : Mac OS X
-//        build_machine_ip : 127.0.0.1
-//        build_user : flow
-//        build_date : Thu Oct 22 11:18:48 EDT 2020
-//        version_number : 1.0.0-20201022_1118_master
-//        build_machine : Flow-9.local
-//        project_name : a8-versions
+// 
 // 
 //      
 
@@ -27,6 +20,8 @@ import scalajscrossproject.JSPlatform
 import sbtcrossproject.CrossType
 
 object Common extends a8.sbt_a8.SharedSettings with a8.sbt_a8.HaxeSettings with a8.sbt_a8.SassSettings with a8.sbt_a8.dobby.DobbySettings {
+
+  override def settings: Seq[Def.Setting[_]] = Seq()
 
   def crossProject(artifactName: String, dir: java.io.File, id: String) =
     sbtcrossproject.CrossProject(id, dir)(JSPlatform, JVMPlatform)
@@ -50,7 +45,7 @@ object Common extends a8.sbt_a8.SharedSettings with a8.sbt_a8.HaxeSettings with 
   override def jsSettings: Seq[Def.Setting[_]] =
     super.jsSettings ++
     Seq(
-      (artifactPath in (Compile, fastOptJS)) := crossTarget.value / "classes" / "webapp" / "scripts" / ((moduleName in fastOptJS).value + "-fastopt.js")
+      Compile / fastOptJS / artifactPath := crossTarget.value / "classes" / "webapp" / "scripts" / ((fastOptJS / moduleName).value + "-fastopt.js")
     )
 
 
@@ -61,7 +56,7 @@ object Common extends a8.sbt_a8.SharedSettings with a8.sbt_a8.HaxeSettings with 
   lazy val repoConfigFile = new java.io.File(System.getProperty("user.home") + "/.a8/repo.properties")
 
   lazy val repoProperties = {
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     val props = new java.util.Properties()
     if ( repoConfigFile.exists() ) {
       val input = new java.io.FileInputStream(repoConfigFile)

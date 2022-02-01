@@ -4,35 +4,31 @@
 // 
 // This file is generated from modules.conf using `a8-versions build_dot_sbt`
 // 
-// It was generated at 2020-11-04 13:46:59.160 -0500 by glen on mini
+// It was generated at 2022-01-31T20:02:25.351737300 by glen on fullfillment
 // 
 // a8-versions build/versioning info follows
 // 
-//        build_java_version : 1.8.0_111
-//        build_os : Mac OS X
-//        build_machine_ip : 127.0.0.1
-//        build_user : flow
-//        build_date : Thu Oct 22 11:18:48 EDT 2020
-//        version_number : 1.0.0-20201022_1118_master
-//        build_machine : Flow-9.local
-//        project_name : a8-versions
+// 
 // 
 //      
 
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.2.0")
+addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.9.9")
+addSbtPlugin("com.github.sbt" % "sbt-pgp" % "2.1.2")
+
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.6.0")
 addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "1.0.0")
 //addSbtPlugin("io.get-coursier" % "sbt-coursier" % "2.0.0-RC6")
 //addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.9.0")
 
-resolvers += "a8-sbt-plugins" at readRepoUrl()
-credentials += readRepoCredentials()
+
 
 //libraryDependencies += "org.slf4j" % "slf4j-nop" % "1.7.21"
 //addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.9.3")
 
-addSbtPlugin("a8" % "sbt-a8" % "1.1.0-20191220_1208")
+addSbtPlugin("io.accur8" % "sbt-a8" % "1.2.0-20220113_1040")
+// old plugin
+//addSbtPlugin("a8" % "sbt-a8" % "1.1.0-20210702_1452")
 
-addSbtPlugin("ch.epfl.scala" % "sbt-bloop" % "1.4.4")
 
 // This plugin can be removed when using Scala 2.13.0 or above
 addSbtPlugin("org.lyranthe.sbt" % "partial-unification" % "1.1.2")
@@ -45,7 +41,7 @@ addSbtPlugin("org.lyranthe.sbt" % "partial-unification" % "1.1.2")
   lazy val repoConfigFile = new java.io.File(System.getProperty("user.home") + "/.a8/repo.properties")
 
   lazy val repoProperties = {
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     val props = new java.util.Properties()
     if ( repoConfigFile.exists() ) {
       val input = new java.io.FileInputStream(repoConfigFile)
