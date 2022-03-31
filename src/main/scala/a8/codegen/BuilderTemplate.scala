@@ -185,6 +185,7 @@ class BuilderTemplate(
   val typeClassName: TypeName,
   val builderClassName: TypeName,
   val generateFor: CompanionGen=>Boolean,
+  val callBuilderOverrideMethod: Boolean = true,
 ) {
 
   def build(caseClass: CaseClass): Option[String] = {
@@ -195,22 +196,46 @@ class BuilderTemplate(
     }
   }
 
+  def resolveBuilderClassName(caseClass: CaseClass): String =
+    s"${builderClassName.fullName}[${caseClass.name},parameters.type]"
+
   def resolveTypeClassName(caseClass: CaseClass): String =
     s"${typeClassName.fullName}[${caseClass.name}]"
 
   def rawBuild(caseClass: CaseClass, includeBuildCall: Boolean = true): String = {
-    val propLines =
-      caseClass
-        .properties
-        .map(prop => s".addField(_.${prop.nameAsVal})")
-    val buildCall = includeBuildCall.option(".build")
-    val body = (propLines ++ buildCall).mkString("\n").indent("    ")
-    s"""
-implicit lazy val ${valName}: ${resolveTypeClassName(caseClass)} =
-  ${builderClassName}(generator)
-${body}
-""".trim
-  }
 
+    val builderOverrideMethodName =
+      s"${valName}Builder"
+
+    val callBuilderOverrideLines =
+      if ( callBuilderOverrideMethod ) {
+        val builderClassName = resolveBuilderClassName(caseClass)
+        Vector(s"protected def ${builderOverrideMethodName}(builder: ${builderClassName}): ${builderClassName} = builder","")
+      } else {
+        Vector.empty
+      }
+
+    val rawPropLines = (
+      Vector(s"${builderClassName}(generator)") ++
+        caseClass
+          .properties
+          .map(prop => s"  .addField(_.${prop.nameAsVal})")
+    )
+
+    val propLines =
+      if ( callBuilderOverrideMethod ) {
+        Vector(s"${builderOverrideMethodName}(") ++ rawPropLines.map("  " + _) ++ Vector(")")
+      } else {
+        rawPropLines
+      }
+
+    val buildCall = includeBuildCall.option(".build")
+
+    val headerLines: Seq[String] = callBuilderOverrideLines ++ Vector(s"implicit lazy val ${valName}: ${resolveTypeClassName(caseClass)} =")
+    val bodyLines = (propLines ++ buildCall).map("  " + _)
+
+    (headerLines ++ bodyLines).mkString("\n")
+
+  }
 
 }
