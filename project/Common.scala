@@ -3,11 +3,18 @@
 // 
 // This file is generated from modules.conf using `a8-versions build_dot_sbt`
 // 
-// It was generated at 2022-01-31T20:02:25.352738200 by glen on fullfillment
+// It was generated at 2022-03-31 17:24:04.960 -0400 by glen on stella.local
 // 
 // a8-versions build/versioning info follows
 // 
-// 
+//        build_date : Thu Sep 30 12:56:07 CDT 2021
+//        build_machine : ENNS-PC
+//        build_machine_ip : 127.0.1.1
+//        build_java_version : 11.0.11
+//        build_user : raph
+//        version_number : 1.0.0-20210930_1255_master
+//        project_name : a8-versions
+//        build_os : Linux
 // 
 //      
 
@@ -20,8 +27,6 @@ import scalajscrossproject.JSPlatform
 import sbtcrossproject.CrossType
 
 object Common extends a8.sbt_a8.SharedSettings with a8.sbt_a8.HaxeSettings with a8.sbt_a8.SassSettings with a8.sbt_a8.dobby.DobbySettings {
-
-  override def settings: Seq[Def.Setting[_]] = Seq()
 
   def crossProject(artifactName: String, dir: java.io.File, id: String) =
     sbtcrossproject.CrossProject(id, dir)(JSPlatform, JVMPlatform)

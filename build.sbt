@@ -4,29 +4,36 @@
 // 
 // This file is generated from modules.conf using `a8-versions build_dot_sbt`
 // 
-// It was generated at 2022-01-31T20:02:25.348737800 by glen on fullfillment
+// It was generated at 2022-03-31 17:24:04.807 -0400 by glen on stella.local
 // 
 // a8-versions build/versioning info follows
 // 
-// 
+//        build_date : Thu Sep 30 12:56:07 CDT 2021
+//        build_machine : ENNS-PC
+//        build_machine_ip : 127.0.1.1
+//        build_java_version : 11.0.11
+//        build_user : raph
+//        version_number : 1.0.0-20210930_1255_master
+//        project_name : a8-versions
+//        build_os : Linux
 // 
 //      
-
-val appVersion = a8.sbt_a8.versionStamp(file("."))
 
 val scalaLibVersion = "2.13.6"
 
 scalacOptions in Global ++= Seq("-deprecation", "-unchecked", "-feature")
 
+resolvers in Global += "a8-repo" at Common.readRepoUrl()
 
-publishTo in Global := sonatypePublishToBundle.value
-credentials in Global += Credentials(Path.userHome / ".sbt" / "sonatype.credentials")
+publishTo in Global := Some("a8-repo-releases" at Common.readRepoUrl())
+//publishTo in Global := sonatypePublishToBundle.value
+//credentials in Global += Credentials(Path.userHome / ".sbt" / "sonatype.credentials")
 
 scalaVersion in Global := scalaLibVersion
 
 organization in Global := "io.accur8"
 
-version in Global := appVersion
+version in Global := a8.sbt_a8.versionStamp(file("."))
 
 versionScheme in Global := Some("strict")
 
