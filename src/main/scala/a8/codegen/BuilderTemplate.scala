@@ -41,13 +41,19 @@ object BuilderTemplate {
       TypeName("a8.shared.jdbcf.mapper.Mapper"),
       TypeName("a8.shared.jdbcf.mapper.MapperBuilder"),
       generateFor = _.jdbcMapper,
+      callBuilderOverrideMethod = false,
     ) {
 
-      def sqlTableAnno(caseClass: CaseClass): Option[String] =
+      def sqlTableAnno(caseClass: CaseClass): Option[CaseClassAst.Annotation] =
         caseClass
           .annotations
           .find(_.name == "SqlTable")
-          .map(_.parms.head.value)
+
+      def sqlTableAnnoValue(caseClass: CaseClass): Option[String] =
+        caseClass
+          .annotations
+          .find(_.name == "SqlTable")
+          .flatMap(_.parms.headOption.map(_.value))
 
       def primaryKeys(caseClass: CaseClass): List[Property] =
         caseClass
@@ -68,37 +74,59 @@ object BuilderTemplate {
       }
 
       override def resolveTypeClassName(caseClass: CaseClass): String = {
-        primaryKeys(caseClass) match {
-          case Nil =>
-            super.resolveTypeClassName(caseClass)
-          case List(pk) =>
-            s"a8.shared.jdbcf.mapper.KeyedMapper[${caseClass.name},${pk.typeName}]"
-          case l =>
-            s"a8.shared.jdbcf.mapper.KeyedMapper[${caseClass.name},(${l.map(_.typeName).mkString(",")})]"
+        (primaryKeys(caseClass), sqlTableAnno(caseClass)) match {
+          case (Nil, None) =>
+            s"a8.shared.jdbcf.mapper.Mapper[${caseClass.name}]"
+          case (Nil, Some(_)) =>
+            s"a8.shared.jdbcf.mapper.TableMapper[${caseClass.name}]"
+          case (List(pk), _) =>
+            s"a8.shared.jdbcf.mapper.KeyedTableMapper[${caseClass.name},${pk.typeName}]"
+          case (l, _) =>
+            s"a8.shared.jdbcf.mapper.KeyedTableMapper[${caseClass.name},(${l.map(_.typeName).mkString(",")})]"
         }
       }
 
       override def rawBuild(caseClass: CaseClass, includeBuildCall: Boolean = true): String = {
 
         val tableName =
-        sqlTableAnno(caseClass)
-          .map { value =>
-            s".tableName(${value})"
-          }
+          sqlTableAnnoValue(caseClass)
+            .filter(_.trim.nonEmpty)
+            .map { value =>
+              s".tableName(${value})"
+            }
 
         val base = super.rawBuild(caseClass, false)
         val suffix =
-          primaryKeyLine(caseClass) match {
-            case Some(pkl) =>
+          (primaryKeyLine(caseClass), tableName) match {
+            case (Some(pkl), _) =>
               List(
                 pkl,
-                ".buildKeyedMapper"
+                ".buildKeyedTableMapper"
               )
-            case None =>
+            case (_, Some(_)) =>
+              List(".buildTableMapper")
+            case _ =>
               List(".buildMapper")
           }
 
-        (base + (tableName ++ suffix).mkString("\n","\n","").indent("    ")).trim
+        val hasTableMapper =
+          (primaryKeys(caseClass), sqlTableAnno(caseClass)) match {
+            case (Nil, None) =>
+              false
+            case _ =>
+              true
+          }
+
+        val queryDsl =
+          if ( hasTableMapper ) {
+            "\n\n" + QueryDslGenerator.generate(caseClass)
+          } else {
+            ""
+          }
+
+        toString
+
+        (base + (tableName ++ suffix).mkString("\n","\n","").indent("    ")).trim + queryDsl
 
       }
 
@@ -110,6 +138,7 @@ object BuilderTemplate {
       TypeName("a8.sync.qubes.QubesMapper"),
       TypeName("a8.sync.qubes.QubesMapperBuilder"),
       generateFor = _.qubesMapper,
+      callBuilderOverrideMethod = false,
     ) {
 
       case class QubesAnno(cube: String, appSpace: String)
