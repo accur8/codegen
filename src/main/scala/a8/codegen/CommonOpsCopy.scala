@@ -21,6 +21,15 @@ trait CommonOpsCopy {
 
   implicit class StringOps(private val s: String) {
 
+    def stripQuotes: String = {
+      val string = s
+      if ( string.length > 2 && string.head == '"' && string.last == '"' ) {
+        string.substring(1, string.length-1)
+      } else {
+        string
+      }
+    }
+
     def indent(indent: String) = {
       val result =
         s.linesIterator

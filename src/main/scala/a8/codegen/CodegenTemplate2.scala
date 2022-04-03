@@ -1,8 +1,9 @@
 package a8.codegen
 
 
-import a8.codegen.CaseClassAst.CaseClass
+import a8.codegen.CaseClassAst.{CaseClass, SourceFile}
 import a8.codegen.CodegenTemplate.TemplateFactory
+import a8.codegen.CodegenTemplate2.ResolvedCaseClass
 import a8.codegen.CommonOpsCopy._
 import cats.effect.{IO, IOApp}
 
@@ -28,6 +29,12 @@ object CodegenTemplate2 extends TemplateFactory with IOApp.Simple {
       .void
 
 //    Codegen.codeGenScalaFiles(ProjectRoot("/Users/glen/code/accur8/composite/wsjdbc"))
+  }
+
+  trait ResolvedCaseClass {
+    val caseClass: CaseClass
+    val model: SourceFile
+    def companionGen = caseClass.companionGen
   }
 
 }
@@ -71,6 +78,8 @@ case class CodegenTemplate2(file: java.io.File, project: Project) extends Codege
   lazy val header = s"""package ${sourceFile.pakkage}
 
 import a8.shared.Meta.{CaseClassParm, Generator, Constructors}
+import a8.shared.jdbcf.querydsl
+import a8.shared.jdbcf.querydsl.QueryDsl
 
 /**
 
@@ -86,7 +95,7 @@ ${manualImports.mkString("\n")}
 
 """
 
-  case class CaseClassGen(caseClass: CaseClass) {
+  case class CaseClassGen(caseClass: CaseClass, model: SourceFile) extends ResolvedCaseClass { caseClassGen =>
 
     lazy val props: Iterable[CaseClassAst.Property] = caseClass.properties
 
@@ -161,7 +170,7 @@ ${
 ${
       BuilderTemplate
         .templates
-        .flatMap(_.build(caseClass))
+        .flatMap(_.build(caseClassGen))
         .mkString("\n\n")
 }${
 
@@ -195,6 +204,6 @@ ${bareBody.trim.indent("  ")}
 
   }
 
-  lazy val generatedCaseClassCode = sf.caseClasses.map(CaseClassGen).map(_.body).mkString("\n\n\n")
+  lazy val generatedCaseClassCode = sf.caseClasses.map(cc => CaseClassGen(cc, sf)).map(_.body).mkString("\n\n\n")
 
 }

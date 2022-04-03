@@ -3,6 +3,7 @@ package a8.codegen
 
 import a8.codegen.CaseClassAst.{Annotation, CaseClass, Property, TypeName}
 import CommonOpsCopy._
+import a8.codegen.CodegenTemplate2.ResolvedCaseClass
 
 object BuilderTemplate {
 
@@ -44,25 +45,8 @@ object BuilderTemplate {
       callBuilderOverrideMethod = false,
     ) {
 
-      def sqlTableAnno(caseClass: CaseClass): Option[CaseClassAst.Annotation] =
-        caseClass
-          .annotations
-          .find(_.name == "SqlTable")
-
-      def sqlTableAnnoValue(caseClass: CaseClass): Option[String] =
-        caseClass
-          .annotations
-          .find(_.name == "SqlTable")
-          .flatMap(_.parms.headOption.map(_.value))
-
-      def primaryKeys(caseClass: CaseClass): List[Property] =
-        caseClass
-          .properties
-          .filter(_.annotations.exists(_.name == "PK"))
-          .toList
-
       def primaryKeyLine(caseClass: CaseClass): Option[String] = {
-        primaryKeys(caseClass) match {
+        caseClass.primaryKeys match {
           case Nil =>
             None
           case List(pk) =>
@@ -74,7 +58,7 @@ object BuilderTemplate {
       }
 
       override def resolveTypeClassName(caseClass: CaseClass): String = {
-        (primaryKeys(caseClass), sqlTableAnno(caseClass)) match {
+        (caseClass.primaryKeys, caseClass.sqlTableAnno) match {
           case (Nil, None) =>
             s"a8.shared.jdbcf.mapper.Mapper[${caseClass.name}]"
           case (Nil, Some(_)) =>
@@ -86,16 +70,18 @@ object BuilderTemplate {
         }
       }
 
-      override def rawBuild(caseClass: CaseClass, includeBuildCall: Boolean = true): String = {
+      override def rawBuild(resolvedCaseClass: ResolvedCaseClass, includeBuildCall: Boolean = true): String = {
+        import resolvedCaseClass.caseClass
 
         val tableName =
-          sqlTableAnnoValue(caseClass)
+          caseClass
+            .sqlTableAnnoValue
             .filter(_.trim.nonEmpty)
             .map { value =>
               s".tableName(${value})"
             }
 
-        val base = super.rawBuild(caseClass, false)
+        val base = super.rawBuild(resolvedCaseClass, false)
         val suffix =
           (primaryKeyLine(caseClass), tableName) match {
             case (Some(pkl), _) =>
@@ -109,22 +95,7 @@ object BuilderTemplate {
               List(".buildMapper")
           }
 
-        val hasTableMapper =
-          (primaryKeys(caseClass), sqlTableAnno(caseClass)) match {
-            case (Nil, None) =>
-              false
-            case _ =>
-              true
-          }
-
-        val queryDsl =
-          if ( hasTableMapper ) {
-            "\n\n" + QueryDslGenerator.generate(caseClass)
-          } else {
-            ""
-          }
-
-        toString
+        val queryDsl = "\n\n" + QueryDslGenerator.generate(resolvedCaseClass)
 
         (base + (tableName ++ suffix).mkString("\n","\n","").indent("    ")).trim + queryDsl
 
@@ -184,11 +155,12 @@ object BuilderTemplate {
 //          .getOrElse(sys.error(s"must supply PK on ${caseClass.name}"))
       }
 
-      override def rawBuild(caseClass: CaseClass, includeBuildCall: Boolean = true): String = {
+      override def rawBuild(resolvedCaseClass: ResolvedCaseClass, includeBuildCall: Boolean = true): String = {
+        import resolvedCaseClass.caseClass
 
         val qa = qubesAnno(caseClass)
 
-        val base = super.rawBuild(caseClass, false)
+        val base = super.rawBuild(resolvedCaseClass, false)
         val suffix =
           List(
             s".cubeName(${qa.cube})",
@@ -217,7 +189,7 @@ class BuilderTemplate(
   val callBuilderOverrideMethod: Boolean = true,
 ) {
 
-  def build(caseClass: CaseClass): Option[String] = {
+  def build(caseClass: ResolvedCaseClass): Option[String] = {
     if ( generateFor(caseClass.companionGen) ) {
       Some(rawBuild(caseClass))
     } else {
@@ -231,7 +203,8 @@ class BuilderTemplate(
   def resolveTypeClassName(caseClass: CaseClass): String =
     s"${typeClassName.fullName}[${caseClass.name}]"
 
-  def rawBuild(caseClass: CaseClass, includeBuildCall: Boolean = true): String = {
+  def rawBuild(resolvedCaseClass: ResolvedCaseClass, includeBuildCall: Boolean = true): String = {
+    import resolvedCaseClass.caseClass
 
     val builderOverrideMethodName =
       s"${valName}Builder"

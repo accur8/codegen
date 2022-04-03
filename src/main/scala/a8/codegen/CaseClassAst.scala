@@ -12,7 +12,12 @@ object CaseClassAst {
   case class SourceFile(
     pakkage: PackageName,
     caseClasses: Iterable[CaseClass]
-  )
+  ) {
+    lazy val caseClassesByName =
+      caseClasses
+        .map(cc => cc.name.value -> cc)
+        .toMap
+  }
 
   case class CaseClass(
     file: java.io.File,
@@ -27,6 +32,21 @@ object CaseClassAst {
     lazy val primaryKey: Option[Property] =
       properties
         .find(_.annotations.exists(_.name == "PK"))
+
+    lazy val sqlTableAnno: Option[CaseClassAst.Annotation] =
+      annotations
+        .find(_.name == "SqlTable")
+
+    lazy val sqlTableAnnoValue: Option[String] =
+      sqlTableAnno
+        .flatMap(_.parms.headOption.map(_.value))
+
+    lazy val primaryKeys: List[Property] =
+      properties
+        .filter(_.annotations.exists(_.name == "PK"))
+        .toList
+
+    lazy val hasSqlTable = primaryKeys.nonEmpty || sqlTableAnno.nonEmpty
 
   }
 

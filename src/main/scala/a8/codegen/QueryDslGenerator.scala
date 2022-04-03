@@ -2,7 +2,8 @@ package a8.codegen
 
 
 import a8.codegen.CaseClassAst.CaseClass
-import MoreOps._
+import CommonOpsCopy._
+import a8.codegen.CodegenTemplate2.ResolvedCaseClass
 
 object QueryDslGenerator {
 
@@ -36,13 +37,21 @@ object QueryDslGenerator {
     to: String,
   )
 
-  def generate(caseClass: CaseClass): String = {
+  def generate(resolvedCaseClass: ResolvedCaseClass): String = {
+    import resolvedCaseClass.caseClass
     // get @Join annos
 
     val fields =
       caseClass
         .properties
-        .map(p => s"  val ${p.nameAsVal} = QueryDsl.field[${p.typeName.fullName}](${p.nameAsStringLit}, join)")
+        .map { prop =>
+          resolvedCaseClass.model.caseClassesByName.get(prop.typeName.fullName) match {
+            case None =>
+              s"  val ${prop.nameAsVal} = QueryDsl.field[${prop.typeName.fullName}](${prop.nameAsStringLit}, join)"
+            case Some(cc) =>
+              s"""  val ${prop.nameAsVal} = new ${cc.name.value}.TableDsl(QueryDsl.ComponentJoin(${prop.nameAsStringLit}, join))"""
+          }
+        }
         .mkString("\n")
 
 
@@ -60,32 +69,45 @@ object QueryDslGenerator {
         }
         .map { joinAnno =>
 s"""
-lazy val ${joinAnno.name.stripQuotes}: TableDsl = {
+lazy val ${joinAnno.name.stripQuotes}: ${joinAnno.to.stripQuotes}.TableDsl = {
   val childJoin = QueryDsl.createJoin(join, ${joinAnno.name}, queryDsl.tableDsl, ()=>container, ${joinAnno.to.stripQuotes}.jdbcMapper) { (from,to) =>
     ${joinAnno.expr.stripQuotes}
   }
-  new TableDsl(childJoin)
+  new ${joinAnno.to.stripQuotes}.TableDsl(childJoin)
 }
 """
         }
         .mkString("\n")
 
-    toString
+    val queryMethods =
+      if ( resolvedCaseClass.caseClass.hasSqlTable ) {
+s"""
+val queryDsl = new QueryDsl[${caseClass.name.value}, TableDsl](jdbcMapper, new TableDsl)
+
+def query[F[_]: cats.effect.Async](whereFn: TableDsl => QueryDsl.Condition): querydsl.SelectQuery[F, ${caseClass.name.value}, TableDsl] =
+  queryDsl.query(whereFn)
+
+def update[F[_]: cats.effect.Async](set: TableDsl => Iterable[querydsl.UpdateQuery.Assignment[_]]): querydsl.UpdateQuery[F, TableDsl] =
+  queryDsl.update(set)
+"""
+      } else {
+        ""
+      }
+
+    val tableDslClassDefLine =
+      if ( resolvedCaseClass.caseClass.hasSqlTable ) {
+        s"class TableDsl(join: QueryDsl.Join = QueryDsl.RootJoin) {"
+      } else {
+        s"class TableDsl(join: QueryDsl.Linker) extends QueryDsl.Component[${caseClass.name.value}](join) {"
+      }
+
 
     s"""
-class TableDsl(join: QueryDsl.Join = QueryDsl.RootJoin) {
+${tableDslClassDefLine}
 ${fields}
 ${joins.indent("  ")}
 }
-
-val queryDsl = new QueryDsl[${caseClass.name.value}, TableDsl](jdbcMapper, new TableDsl)
-
-def query[F[_]: cats.effect.Async](whereFn: TableDsl => QueryDsl.Condition): SelectQuery[F, ${caseClass.name.value}, TableDsl] =
-  queryDsl.query(whereFn)
-
-def update[F[_]: cats.effect.Async](set: TableDsl => Iterable[UpdateQuery.Assignment[_]]): UpdateQuery[F, TableDsl] =
-  queryDsl.update(set)
-
+${queryMethods}
 """
 
   }
