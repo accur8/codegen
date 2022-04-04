@@ -1,5 +1,7 @@
 package a8.codegen
 
+import a8.codegen.BuilderTemplate.QubesAnno
+
 object CaseClassAst {
 
   case class PackageName(value: String) {
@@ -47,6 +49,17 @@ object CaseClassAst {
         .toList
 
     lazy val hasSqlTable = primaryKeys.nonEmpty || sqlTableAnno.nonEmpty
+
+    lazy val qubesAnno: QubesAnno =
+      annotations
+        .find(_.name == "QubesAnno")
+        .map { anno =>
+          QubesAnno(
+            cube = anno.parms.find(_.name == "cube").map(_.value).getOrElse('"'.toString + name + '"'.toString),
+            appSpace = anno.parms.find(_.name == "appSpace").map(_.value).getOrElse(sys.error("""must supply @QubesAnno(appSpace = "foo") i.e. appSpace annotation field is required""")),
+          )
+        }
+        .getOrElse(sys.error(s"""for qubesMapper minimally the @QubesAnno(appSpace = "foo") is required for every class marked with @CompanionGen() on ${qualifiedName}"""))
 
   }
 

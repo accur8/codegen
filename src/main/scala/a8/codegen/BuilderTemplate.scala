@@ -7,6 +7,8 @@ import a8.codegen.CodegenTemplate2.ResolvedCaseClass
 
 object BuilderTemplate {
 
+  case class QubesAnno(cube: String, appSpace: String)
+
   lazy val messagePackTemplate =
     new BuilderTemplate(
       "messagePackCodec",
@@ -39,7 +41,7 @@ object BuilderTemplate {
   lazy val jdbcMapperTemplate =
     new BuilderTemplate(
       "jdbcMapper",
-      TypeName("a8.shared.jdbcf.mapper.Mapper"),
+      TypeName("a8.shared.jdbcf.mapper.ComponentMapper"),
       TypeName("a8.shared.jdbcf.mapper.MapperBuilder"),
       generateFor = _.jdbcMapper,
       callBuilderOverrideMethod = false,
@@ -60,7 +62,7 @@ object BuilderTemplate {
       override def resolveTypeClassName(caseClass: CaseClass): String = {
         (caseClass.primaryKeys, caseClass.sqlTableAnno) match {
           case (Nil, None) =>
-            s"a8.shared.jdbcf.mapper.Mapper[${caseClass.name}]"
+            s"a8.shared.jdbcf.mapper.ComponentMapper[${caseClass.name}]"
           case (Nil, Some(_)) =>
             s"a8.shared.jdbcf.mapper.TableMapper[${caseClass.name}]"
           case (List(pk), _) =>
@@ -112,10 +114,8 @@ object BuilderTemplate {
       callBuilderOverrideMethod = false,
     ) {
 
-      case class QubesAnno(cube: String, appSpace: String)
-
       override def resolveTypeClassName(caseClass: CaseClass): String = {
-        primaryKeys(caseClass) match {
+        caseClass.primaryKeys match {
           case Nil =>
             sys.error("@PK is required")
           case List(pk) =>
@@ -125,26 +125,8 @@ object BuilderTemplate {
         }
       }
 
-      def primaryKeys(caseClass: CaseClass): List[Property] =
-        caseClass
-          .properties
-          .filter(_.annotations.exists(_.name == "PK"))
-          .toList
-
-      def qubesAnno(caseClass: CaseClass): QubesAnno =
-        caseClass
-          .annotations
-          .find(_.name == "QubesAnno")
-          .map { anno =>
-            QubesAnno(
-              cube = anno.parms.find(_.name == "cube").map(_.value).getOrElse('"'.toString + caseClass.name + '"'.toString),
-              appSpace = anno.parms.find(_.name == "appSpace").map(_.value).getOrElse(sys.error("""must supply @QubesAnno(appSpace = "foo") i.e. appSpace annotation field is required""")),
-            )
-          }
-          .getOrElse(sys.error(s"""for qubesMapper minimally the @QubesAnno(appSpace = "foo") is required for every class marked with @CompanionGen() on ${caseClass.qualifiedName}"""))
-
       def primateKeyLine(caseClass: CaseClass): String = {
-        primaryKeys(caseClass) match {
+        caseClass.primaryKeys match {
           case Nil =>
             sys.error(s"must supply PK on ${caseClass.name}")
           case List(pk) =>
@@ -158,7 +140,7 @@ object BuilderTemplate {
       override def rawBuild(resolvedCaseClass: ResolvedCaseClass, includeBuildCall: Boolean = true): String = {
         import resolvedCaseClass.caseClass
 
-        val qa = qubesAnno(caseClass)
+        val qa = caseClass.qubesAnno
 
         val base = super.rawBuild(resolvedCaseClass, false)
         val suffix =
