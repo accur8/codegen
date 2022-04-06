@@ -73,8 +73,6 @@ case class CodegenTemplate2(file: java.io.File, project: Project) extends Codege
     sc
   }
 
-  lazy val sf = sourceFile
-
   lazy val header = s"""package ${sourceFile.pakkage}
 
 import a8.shared.Meta.{CaseClassParm, Generator, Constructors}
@@ -204,6 +202,11 @@ ${bareBody.trim.indent("  ")}
 
   }
 
-  lazy val generatedCaseClassCode = sf.caseClasses.map(cc => CaseClassGen(cc, sf)).map(_.body).mkString("\n\n\n")
+  lazy val generatedCaseClassCode =
+    sourceFile
+      .caseClasses
+      .map(cc => CaseClassGen(cc, sourceFile))
+      .map(_.body)
+      .mkString("\n\n\n")
 
 }
