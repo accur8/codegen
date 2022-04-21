@@ -70,7 +70,7 @@ object QueryDslGenerator {
         .map { joinAnno =>
 s"""
 lazy val ${joinAnno.name.stripQuotes}: ${joinAnno.to.stripQuotes}.TableDsl = {
-  val childJoin = QueryDsl.createJoin(join, ${joinAnno.name}, queryDsl.tableDsl, ()=>container, ${joinAnno.to.stripQuotes}.jdbcMapper) { (from,to) =>
+  val childJoin = QueryDsl.createJoin(join, ${joinAnno.name}, queryDsl.tableDsl, ()=>${joinAnno.to.stripQuotes}.queryDsl.tableDsl, ${joinAnno.to.stripQuotes}.jdbcMapper) { (from,to) =>
     ${joinAnno.expr.stripQuotes}
   }
   new ${joinAnno.to.stripQuotes}.TableDsl(childJoin)
