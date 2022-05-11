@@ -98,7 +98,7 @@ def update[F[_]: cats.effect.Async](set: TableDsl => Iterable[querydsl.UpdateQue
       if ( resolvedCaseClass.caseClass.hasSqlTable ) {
         s"class TableDsl(join: QueryDsl.Join = QueryDsl.RootJoin) {"
       } else {
-        s"class TableDsl(join: QueryDsl.Linker) extends QueryDsl.Component[${caseClass.name.value}](join) {"
+        s"class TableDsl(join: QueryDsl.Path) extends QueryDsl.Component[${caseClass.name.value}](join) {"
       }
 
 
