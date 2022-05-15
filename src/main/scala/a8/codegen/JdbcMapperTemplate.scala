@@ -14,6 +14,11 @@ extends
     TypeName("a8.shared.jdbcf.mapper.MapperBuilder"),
     generateFor = _.jdbcMapper,
     callBuilderOverrideMethod = false,
+    imports =
+      List(
+        "import a8.shared.jdbcf.querydsl",
+        "import a8.shared.jdbcf.querydsl.QueryDsl",
+      )
   )
 {
 

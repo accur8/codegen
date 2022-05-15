@@ -50,6 +50,7 @@ class BuilderTemplate(
   val builderClassName: TypeName,
   val generateFor: CompanionGen=>Boolean,
   val callBuilderOverrideMethod: Boolean = true,
+  val imports: Iterable[String] = Iterable.empty,
 ) {
 
   def build(caseClass: ResolvedCaseClass): Option[String] = {

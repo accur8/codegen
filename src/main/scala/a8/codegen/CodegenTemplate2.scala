@@ -16,8 +16,8 @@ object CodegenTemplate2 extends TemplateFactory with IOApp.Simple {
   override def run: IO[Unit] = {
 //    Codegen.runCodeGen(new File("c:/Users/glen/code/accur8/composite"))
 
-    Codegen.runCodeGen(new File("/Users/glen/code/customers/confidence/teamsync"))
-      .void
+//    Codegen.runCodeGen(new File("/Users/glen/code/customers/confidence/teamsync"))
+//      .void
 
 //      .runCodeGen(new File("/Users/glen/code/accur8/composite"))
 //      .void
@@ -25,8 +25,8 @@ object CodegenTemplate2 extends TemplateFactory with IOApp.Simple {
 //    Codegen.runCodeGen(new File("/Users/glen/code/accur8/composite/sync"))
 //      .void
 
-//    Codegen.runCodeGen(new File("/Users/glen/code/accur8/sync"))
-//      .void
+    Codegen.runCodeGen(new File("/Users/glen/code/accur8/sync"))
+      .void
 
 //    Codegen.codeGenScalaFiles(ProjectRoot("/Users/glen/code/accur8/composite/wsjdbc"))
   }
@@ -76,8 +76,14 @@ case class CodegenTemplate2(file: java.io.File, project: Project) extends Codege
   lazy val header = s"""package ${sourceFile.pakkage}
 
 import a8.shared.Meta.{CaseClassParm, Generator, Constructors}
-import a8.shared.jdbcf.querydsl
-import a8.shared.jdbcf.querydsl.QueryDsl
+${
+    caseClassGens
+      .flatMap(_.templates)
+      .flatMap(_.imports)
+      .toVector
+      .distinct
+      .mkString("\n")
+}
 
 /**
 
@@ -94,6 +100,11 @@ ${manualImports.mkString("\n")}
 """
 
   case class CaseClassGen(caseClass: CaseClass, model: SourceFile) extends ResolvedCaseClass { caseClassGen =>
+
+    lazy val templates =
+      BuilderTemplate
+        .templates
+        .filter(_.generateFor(caseClass.companionGen))
 
     lazy val props: Iterable[CaseClassAst.Property] = caseClass.properties
 
@@ -166,8 +177,7 @@ ${
     lazy val bareBody = s"""
 
 ${
-      BuilderTemplate
-        .templates
+      templates
         .flatMap(_.build(caseClassGen))
         .mkString("\n\n")
 }${
@@ -202,10 +212,13 @@ ${bareBody.trim.indent("  ")}
 
   }
 
-  lazy val generatedCaseClassCode =
+  lazy val caseClassGens =
     sourceFile
       .caseClasses
       .map(cc => CaseClassGen(cc, sourceFile))
+
+  lazy val generatedCaseClassCode =
+    caseClassGens
       .map(_.body)
       .mkString("\n\n\n")
 
