@@ -82,12 +82,12 @@ lazy val ${joinAnno.name.stripQuotes}: ${joinAnno.to.stripQuotes}.TableDsl = {
     val queryMethods =
       if ( resolvedCaseClass.caseClass.hasSqlTable ) {
 s"""
-val queryDsl = new QueryDsl[${caseClass.name.value}, TableDsl](jdbcMapper, new TableDsl)
+val queryDsl = new QueryDsl[${caseClass.name.value}, TableDsl, ${caseClass.primaryKeyTypeName.getOrElse("Unit")}](jdbcMapper, new TableDsl)
 
-def query(whereFn: TableDsl => QueryDsl.Condition): querydsl.SelectQuery[${caseClass.name.value}, TableDsl] =
+def query[F[_]: cats.effect.Async](whereFn: TableDsl => QueryDsl.Condition): querydsl.SelectQuery[F, ${caseClass.name.value}, TableDsl] =
   queryDsl.query(whereFn)
 
-def update(set: TableDsl => Iterable[querydsl.UpdateQuery.Assignment[_]]): querydsl.UpdateQuery[TableDsl] =
+def update[F[_]: cats.effect.Async](set: TableDsl => Iterable[querydsl.UpdateQuery.Assignment[_]]): querydsl.UpdateQuery[F, TableDsl] =
   queryDsl.update(set)
 """
       } else {

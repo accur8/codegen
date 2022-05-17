@@ -61,6 +61,18 @@ object CaseClassAst {
         }
         .getOrElse(sys.error(s"""for qubesMapper minimally the @QubesAnno(appSpace = "foo") is required for every class marked with @CompanionGen() on ${qualifiedName}"""))
 
+    lazy val primaryKeyTypeName = {
+      primaryKeys match {
+        case Nil =>
+          None
+        case List(primaryKey) =>
+          Some(primaryKey.typeName)
+        case list =>
+          Some(list.map(_.typeName).mkString(","))
+      }
+    }
+
+
   }
 
   case class Annotation(

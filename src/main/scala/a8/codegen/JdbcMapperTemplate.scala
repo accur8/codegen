@@ -35,15 +35,13 @@ extends
   }
 
   override def resolveTypeClassName(caseClass: CaseClass): String = {
-    (caseClass.primaryKeys, caseClass.sqlTableAnno) match {
-      case (Nil, None) =>
+    (caseClass.primaryKeyTypeName, caseClass.sqlTableAnno) match {
+      case (None, None) =>
         s"a8.shared.jdbcf.mapper.ComponentMapper[${caseClass.name}]"
-      case (Nil, Some(_)) =>
+      case (None, Some(_)) =>
         s"a8.shared.jdbcf.mapper.TableMapper[${caseClass.name}]"
-      case (List(pk), _) =>
-        s"a8.shared.jdbcf.mapper.KeyedTableMapper[${caseClass.name},${pk.typeName}]"
-      case (l, _) =>
-        s"a8.shared.jdbcf.mapper.KeyedTableMapper[${caseClass.name},(${l.map(_.typeName).mkString(",")})]"
+      case (Some(pkn), _) =>
+        s"a8.shared.jdbcf.mapper.KeyedTableMapper[${caseClass.name},${pkn}]"
     }
   }
 
