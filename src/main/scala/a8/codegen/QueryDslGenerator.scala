@@ -4,6 +4,7 @@ package a8.codegen
 import a8.codegen.CaseClassAst.CaseClass
 import CommonOpsCopy._
 import a8.codegen.CodegenTemplate2.ResolvedCaseClass
+import MoreOps._
 
 object QueryDslGenerator {
 
@@ -81,14 +82,40 @@ lazy val ${joinAnno.name.stripQuotes}: ${joinAnno.to.stripQuotes}.TableDsl = {
 
     val queryMethods =
       if ( resolvedCaseClass.caseClass.hasSqlTable ) {
-s"""
-val queryDsl = new QueryDsl[${caseClass.name.value}, TableDsl, ${caseClass.primaryKeyTypeName.getOrElse("Unit")}](jdbcMapper, new TableDsl)
 
-def query[F[_]: cats.effect.Async](whereFn: TableDsl => QueryDsl.Condition): querydsl.SelectQuery[F, ${caseClass.name.value}, TableDsl] =
-  queryDsl.query(whereFn)
+        val fParameter =
+          if ( resolvedCaseClass.companionGen.zio )
+            ""
+          else
+            "F, "
 
-def update[F[_]: cats.effect.Async](set: TableDsl => Iterable[querydsl.UpdateQuery.Assignment[_]]): querydsl.UpdateQuery[F, TableDsl] =
-  queryDsl.update(set)
+        val fBracketParameter =
+          if ( resolvedCaseClass.companionGen.zio )
+            ""
+          else
+            "[F]"
+
+        val typeParameters =
+          if ( resolvedCaseClass.companionGen.zio )
+            s"${caseClass.name.value}, TableDsl"
+          else
+            s"${caseClass.name.value}, TableDsl"
+
+        val methodTypeParameters =
+          if ( resolvedCaseClass.companionGen.zio )
+            ""
+          else
+            s"[F[_]: Async]"
+
+        //        val queryDsl = new QueryDsl[${caseClass.name.value}, TableDsl, ${caseClass.primaryKeyTypeName.getOrElse("Unit")}](jdbcMapper, new TableDsl)
+z"""
+val queryDsl = new QueryDsl[${fParameter}${typeParameters}](jdbcMapper, new TableDsl)
+
+def query${methodTypeParameters}(whereFn: TableDsl => QueryDsl.Condition): querydsl.SelectQuery[${fParameter}${typeParameters}] =
+  queryDsl.query${fBracketParameter}(whereFn)
+
+def update${methodTypeParameters}(set: TableDsl => Iterable[querydsl.UpdateQuery.Assignment[_]]): querydsl.UpdateQuery[${fParameter}TableDsl] =
+  queryDsl.update${fBracketParameter}(set)
 """
       } else {
         ""

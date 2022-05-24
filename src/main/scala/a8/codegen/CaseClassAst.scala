@@ -65,10 +65,8 @@ object CaseClassAst {
       primaryKeys match {
         case Nil =>
           None
-        case List(primaryKey) =>
-          Some(primaryKey.typeName)
         case list =>
-          Some(list.map(_.typeName).mkString(","))
+          Some(list.map(_.typeName.toString).mkString(","))
       }
     }
 
