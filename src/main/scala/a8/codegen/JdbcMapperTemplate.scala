@@ -14,13 +14,21 @@ extends
     TypeName("a8.shared.jdbcf.mapper.MapperBuilder"),
     generateFor = _.jdbcMapper,
     callBuilderOverrideMethod = false,
-    imports =
+    staticImports =
       List(
-        "import a8.shared.jdbcf.querydsl",
-        "import a8.shared.jdbcf.querydsl.QueryDsl",
+        "import a8.shared.jdbcf.{querydsl=>querydslp}",
       )
   )
 {
+
+  override def resolvedImports(caseClassGen: ResolvedCaseClass): Iterable[String] = {
+    val asyncImport =
+      if ( !caseClassGen.companionGen.zio )
+        List("cats.effect.Async")
+      else
+        Nil
+    asyncImport ++ staticImports
+  }
 
   def primaryKeyLine(caseClass: CaseClass): Option[String] = {
     caseClass.primaryKeys match {

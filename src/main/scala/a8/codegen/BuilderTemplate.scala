@@ -50,8 +50,11 @@ class BuilderTemplate(
   val builderClassName: TypeName,
   val generateFor: CompanionGen=>Boolean,
   val callBuilderOverrideMethod: Boolean = true,
-  val imports: Iterable[String] = Iterable.empty,
+  val staticImports: Iterable[String] = Iterable.empty,
 ) {
+
+  def resolvedImports(caseClassGen: ResolvedCaseClass): Iterable[String] =
+    staticImports
 
   def build(caseClass: ResolvedCaseClass): Option[String] = {
     if ( generateFor(caseClass.companionGen) ) {

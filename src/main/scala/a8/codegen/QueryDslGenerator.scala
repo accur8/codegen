@@ -48,9 +48,9 @@ object QueryDslGenerator {
         .map { prop =>
           resolvedCaseClass.model.caseClassesByName.get(prop.typeName.fullName) match {
             case None =>
-              s"  val ${prop.nameAsVal} = QueryDsl.field[${prop.typeName.fullName}](${prop.nameAsStringLit}, join)"
+              s"  val ${prop.nameAsVal} = querydslp.QueryDsl.field[${prop.typeName.fullName}](${prop.nameAsStringLit}, join)"
             case Some(cc) =>
-              s"""  val ${prop.nameAsVal} = new ${cc.name.value}.TableDsl(QueryDsl.ComponentJoin(${prop.nameAsStringLit}, join))"""
+              s"""  val ${prop.nameAsVal} = new ${cc.name.value}.TableDsl(querydslp.QueryDsl.ComponentJoin(${prop.nameAsStringLit}, join))"""
           }
         }
         .mkString("\n")
@@ -71,7 +71,7 @@ object QueryDslGenerator {
         .map { joinAnno =>
 s"""
 lazy val ${joinAnno.name.stripQuotes}: ${joinAnno.to.stripQuotes}.TableDsl = {
-  val childJoin = QueryDsl.createJoin(join, ${joinAnno.name}, queryDsl.tableDsl, join=>new ${joinAnno.to.stripQuotes}.TableDsl(join), ${joinAnno.to.stripQuotes}.jdbcMapper) { (from,to) =>
+  val childJoin = querydslp.QueryDsl.createJoin(join, ${joinAnno.name}, queryDsl.tableDsl, join=>new ${joinAnno.to.stripQuotes}.TableDsl(join), ${joinAnno.to.stripQuotes}.jdbcMapper) { (from,to) =>
     ${joinAnno.expr.stripQuotes}
   }
   new ${joinAnno.to.stripQuotes}.TableDsl(childJoin)
@@ -111,12 +111,12 @@ lazy val ${joinAnno.name.stripQuotes}: ${joinAnno.to.stripQuotes}.TableDsl = {
 
         //        val queryDsl = new QueryDsl[${caseClass.name.value}, TableDsl, ${caseClass.primaryKeyTypeName.getOrElse("Unit")}](jdbcMapper, new TableDsl)
 z"""
-val queryDsl = new QueryDsl[${typeParameters}, ${keyParameter}](jdbcMapper, new TableDsl)
+val queryDsl = new querydslp.QueryDsl[${typeParameters}, ${keyParameter}](jdbcMapper, new TableDsl)
 
-def query${methodTypeParameters}(whereFn: TableDsl => QueryDsl.Condition): querydsl.SelectQuery[${fParameter}${typeParameters}] =
+def query${methodTypeParameters}(whereFn: TableDsl => querydslp.QueryDsl.Condition): querydslp..SelectQuery[${fParameter}${typeParameters}] =
   queryDsl.query${fBracketParameter}(whereFn)
 
-def update${methodTypeParameters}(set: TableDsl => Iterable[querydsl.UpdateQuery.Assignment[_]]): querydsl.UpdateQuery[${fParameter}TableDsl] =
+def update${methodTypeParameters}(set: TableDsl => Iterable[querydslp..UpdateQuery.Assignment[_]]): querydslp..UpdateQuery[${fParameter}TableDsl] =
   queryDsl.update${fBracketParameter}(set)
 """
       } else {

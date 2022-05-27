@@ -78,8 +78,11 @@ case class CodegenTemplate2(file: java.io.File, project: Project) extends Codege
 import a8.shared.Meta.{CaseClassParm, Generator, Constructors}
 ${
     caseClassGens
-      .flatMap(_.templates)
-      .flatMap(_.imports)
+      .flatMap(ccg =>
+        ccg
+          .templates
+          .flatMap(_.resolvedImports(ccg))
+      )
       .toVector
       .distinct
       .mkString("\n")
