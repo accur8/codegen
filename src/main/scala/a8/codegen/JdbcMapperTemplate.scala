@@ -24,7 +24,7 @@ extends
   override def resolvedImports(caseClassGen: ResolvedCaseClass): Iterable[String] = {
     val asyncImport =
       if ( !caseClassGen.companionGen.zio )
-        List("cats.effect.Async")
+        List("import cats.effect.Async")
       else
         Nil
     asyncImport ++ staticImports

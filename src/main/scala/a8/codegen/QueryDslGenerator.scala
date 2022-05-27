@@ -113,10 +113,10 @@ lazy val ${joinAnno.name.stripQuotes}: ${joinAnno.to.stripQuotes}.TableDsl = {
 z"""
 val queryDsl = new querydslp.QueryDsl[${typeParameters}, ${keyParameter}](jdbcMapper, new TableDsl)
 
-def query${methodTypeParameters}(whereFn: TableDsl => querydslp.QueryDsl.Condition): querydslp..SelectQuery[${fParameter}${typeParameters}] =
+def query${methodTypeParameters}(whereFn: TableDsl => querydslp.QueryDsl.Condition): querydslp.SelectQuery[${fParameter}${typeParameters}] =
   queryDsl.query${fBracketParameter}(whereFn)
 
-def update${methodTypeParameters}(set: TableDsl => Iterable[querydslp..UpdateQuery.Assignment[_]]): querydslp..UpdateQuery[${fParameter}TableDsl] =
+def update${methodTypeParameters}(set: TableDsl => Iterable[querydslp.UpdateQuery.Assignment[_]]): querydslp.UpdateQuery[${fParameter}TableDsl] =
   queryDsl.update${fBracketParameter}(set)
 """
       } else {
@@ -125,9 +125,9 @@ def update${methodTypeParameters}(set: TableDsl => Iterable[querydslp..UpdateQue
 
     val tableDslClassDefLine =
       if ( resolvedCaseClass.caseClass.hasSqlTable ) {
-        s"class TableDsl(join: QueryDsl.Join = QueryDsl.RootJoin) {"
+        s"class TableDsl(join: querydslp.QueryDsl.Join = querydslp.QueryDsl.RootJoin) {"
       } else {
-        s"class TableDsl(join: QueryDsl.Path) extends QueryDsl.Component[${caseClass.name.value}](join) {"
+        s"class TableDsl(join: querydslp.QueryDsl.Path) extends querydslp.QueryDsl.Component[${caseClass.name.value}](join) {"
       }
 
 
