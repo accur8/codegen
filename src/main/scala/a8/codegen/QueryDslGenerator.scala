@@ -101,7 +101,14 @@ lazy val ${joinAnno.name.stripQuotes}: ${joinAnno.to.stripQuotes}.TableDsl = {
           else
             s"${caseClass.name.value}, TableDsl"
 
-        val keyParameter = resolvedCaseClass.caseClass.primaryKeyTypeName.getOrElse("Unit")
+        val keyParameter = {
+          resolvedCaseClass.companionGen.zio match {
+            case true =>
+              ""
+            case false =>
+              z", ${resolvedCaseClass.caseClass.primaryKeyTypeName.getOrElse("Unit")}"
+          }
+        }
 
         val methodTypeParameters =
           if ( resolvedCaseClass.companionGen.zio )
@@ -111,7 +118,7 @@ lazy val ${joinAnno.name.stripQuotes}: ${joinAnno.to.stripQuotes}.TableDsl = {
 
         //        val queryDsl = new QueryDsl[${caseClass.name.value}, TableDsl, ${caseClass.primaryKeyTypeName.getOrElse("Unit")}](jdbcMapper, new TableDsl)
 z"""
-val queryDsl = new querydslp.QueryDsl[${typeParameters}, ${keyParameter}](jdbcMapper, new TableDsl)
+val queryDsl = new querydslp.QueryDsl[${typeParameters}${keyParameter}](jdbcMapper, new TableDsl)
 
 def query${methodTypeParameters}(whereFn: TableDsl => querydslp.QueryDsl.Condition): querydslp.SelectQuery[${fParameter}${typeParameters}] =
   queryDsl.query${fBracketParameter}(whereFn)
