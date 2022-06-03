@@ -103,9 +103,10 @@ lazy val ${joinAnno.name.stripQuotes}: ${joinAnno.to.stripQuotes}.TableDsl = {
 
         val keyParameter = {
           resolvedCaseClass.companionGen.zio match {
-            case true =>
-              ""
-            case false =>
+//            case true =>
+//              ""
+//            case false =>
+            case _ =>
               z", ${resolvedCaseClass.caseClass.primaryKeyTypeName.getOrElse("Unit")}"
           }
         }

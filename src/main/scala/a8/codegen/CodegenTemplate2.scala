@@ -9,6 +9,7 @@ import cats.effect.{IO, IOApp}
 
 import java.io.File
 import scala.language.postfixOps
+import MoreOps._
 
 object CodegenTemplate2 extends TemplateFactory with IOApp.Simple {
 
@@ -25,8 +26,8 @@ object CodegenTemplate2 extends TemplateFactory with IOApp.Simple {
 //    Codegen.runCodeGen(new File("/Users/glen/code/accur8/composite/sync"))
 //      .void
 
-//    Codegen.runCodeGen(new File("/Users/glen/code/accur8/sync"))
-//      .void
+    Codegen.runCodeGen(new File("/Users/glen/code/accur8/sync"))
+      .void
 
 //    Codegen.codeGenScalaFiles(ProjectRoot("/Users/glen/code/accur8/composite/wsjdbc"))
   }
@@ -115,7 +116,7 @@ ${manualImports.mkString("\n")}
       props
         .zipWithIndex
         .map { case (prop, ordinal) =>
-          s"lazy val ${prop.nameAsVal}: CaseClassParm[${caseClass.name},${prop.typeName}] = CaseClassParm[${caseClass.name},${prop.typeName}](${prop.nameAsStringLit}, _.${prop.nameAsVal}, (d,v) => d.copy(${prop.nameAsVal} = v), ${prop.defaultExpr.map("()=> " + _)}, ${ordinal})"
+          s"lazy val ${prop.nameAsVal}: CaseClassParm[${caseClassName},${prop.typeName}] = CaseClassParm[${caseClassName},${prop.typeName}](${prop.nameAsStringLit}, _.${prop.nameAsVal}, (d,v) => d.copy(${prop.nameAsVal} = v), ${prop.defaultExpr.map("()=> " + _)}, ${ordinal})"
         }
         .mkString("\n")
 
@@ -123,8 +124,8 @@ ${manualImports.mkString("\n")}
       s"""
 object unsafe {
 
-  def rawConstruct(values: IndexedSeq[Any]): ${caseClass.name} = {
-    ${caseClass.name}(
+  def rawConstruct(values: IndexedSeq[Any]): ${caseClassName} = {
+    ${caseClassName}(
 ${
         props
           .zipWithIndex
@@ -136,9 +137,9 @@ ${
 }
     )
   }
-  def iterRawConstruct(values: Iterator[Any]): ${caseClass.name} = {
+  def iterRawConstruct(values: Iterator[Any]): ${caseClassName} = {
     val value =
-      ${caseClass.name}(
+      ${caseClassName}(
 ${
         props
           .map { prop =>
@@ -152,8 +153,8 @@ ${
        sys.error("")
     value
   }
-  def typedConstruct(${props.map(p => s"${p.nameAsVal}: ${p.typeName}").mkString(", ")}): ${caseClass.name} =
-    ${caseClass.name}(${props.map(_.nameAsVal).mkString(", ")})
+  def typedConstruct(${props.map(p => s"${p.nameAsVal}: ${p.typeName}").mkString(", ")}): ${caseClassName} =
+    ${caseClassName}(${props.map(_.nameAsVal).mkString(", ")})
 
 }
 """
@@ -167,8 +168,8 @@ ${
           .map { pk =>
             List(
               "\n\n",
-              s"type Uid = Tid[${caseClass.name}]",
-              s"val Uid = new Tid.Generator[${caseClass.name}]",
+              s"type Uid = Tid[${caseClassName}]",
+              s"val Uid = new Tid.Generator[${caseClassName}]",
             ).mkString("\n")
           }
           .getOrElse("")
@@ -177,7 +178,9 @@ ${
 
     }
 
-    lazy val bareBody = s"""
+    lazy val caseClassName = caseClass.name.toString
+
+    lazy val bareBody = z"""
 
 ${
       templates
@@ -187,11 +190,19 @@ ${
 
       typePerKey
 }
+${
+  if (caseClass.companionGen.zio) {
+    z"""
+implicit val zioEq: zio.prelude.Equal[${caseClassName}] = zio.prelude.Equal.default
+"""
+  } else {
+    ""
+  }
+}
+implicit val catsEq: cats.Eq[${caseClassName}] = cats.Eq.fromUniversalEquals
 
-implicit val catsEq: cats.Eq[${caseClass.name}] = cats.Eq.fromUniversalEquals
-
-lazy val generator: Generator[${caseClass.name},parameters.type] =  {
-  val constructors = Constructors[${caseClass.name}](${props.size}, unsafe.iterRawConstruct)
+lazy val generator: Generator[${caseClassName},parameters.type] =  {
+  val constructors = Constructors[${caseClassName}](${props.size.toString}, unsafe.iterRawConstruct)
   Generator(constructors, parameters)
 }
 
@@ -201,12 +212,12 @@ ${parametersBody.indent("  ")}
 
 ${unsafeBody}
 
-lazy val typeName = "${caseClass.name}"
+lazy val typeName = "${caseClassName}"
 
 """
 
     lazy val body = s"""
-trait Mx${caseClass.name} {
+trait Mx${caseClassName} {
 
 ${bareBody.trim.indent("  ")}
 
