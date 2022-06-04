@@ -17,17 +17,18 @@ object CodegenTemplate2 extends TemplateFactory with IOApp.Simple {
   override def run: IO[Unit] = {
 //    Codegen.runCodeGen(new File("c:/Users/glen/code/accur8/composite"))
 
-    Codegen.runCodeGen(new File("/Users/glen/code/customers/confidence/teamsync"))
-      .void
-
-//      .runCodeGen(new File("/Users/glen/code/accur8/composite"))
+//    Codegen.runCodeGen(new File("/Users/glen/code/customers/confidence/teamsync"))
 //      .void
+
+    Codegen
+      .runCodeGen(new File("/Users/glen/code/accur8/composite"))
+      .void
 
 //    Codegen.runCodeGen(new File("/Users/glen/code/accur8/composite/sync"))
 //      .void
 
-    Codegen.runCodeGen(new File("/Users/glen/code/accur8/sync"))
-      .void
+//    Codegen.runCodeGen(new File("/Users/glen/code/accur8/sync"))
+//      .void
 
 //    Codegen.codeGenScalaFiles(ProjectRoot("/Users/glen/code/accur8/composite/wsjdbc"))
   }

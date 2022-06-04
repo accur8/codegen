@@ -72,7 +72,7 @@ object Codegen extends IOApp {
             //      }
             .collect {
               case p if p.toFile.getName == "codegen.json" =>
-                loadCodegenJson(p.toFile, false)
+                loadCodegenJson(p.getParent.toFile, false)
             }
       }
     stream.flatMap(o => fs2.Stream.iterable(o))
