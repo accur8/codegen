@@ -17,12 +17,12 @@ object CodegenTemplate2 extends TemplateFactory with IOApp.Simple {
   override def run: IO[Unit] = {
 //    Codegen.runCodeGen(new File("c:/Users/glen/code/accur8/composite"))
 
-//    Codegen.runCodeGen(new File("/Users/glen/code/customers/confidence/teamsync"))
-//      .void
-
-    Codegen
-      .runCodeGen(new File("/Users/glen/code/accur8/composite"))
+    Codegen.runCodeGen(new File("/Users/glen/code/customers/confidence/teamsync"))
       .void
+
+//    Codegen
+//      .runCodeGen(new File("/Users/glen/code/accur8/composite"))
+//      .void
 
 //    Codegen.runCodeGen(new File("/Users/glen/code/accur8/composite/sync"))
 //      .void
@@ -77,19 +77,6 @@ case class CodegenTemplate2(file: java.io.File, project: Project) extends Codege
 
   lazy val header = s"""package ${sourceFile.pakkage}
 
-import a8.shared.Meta.{CaseClassParm, Generator, Constructors}
-${
-    caseClassGens
-      .flatMap(ccg =>
-        ccg
-          .templates
-          .flatMap(_.resolvedImports(ccg))
-      )
-      .toVector
-      .distinct
-      .mkString("\n")
-}
-
 /**
 
   WARNING THIS IS GENERATED CODE.  DO NOT EDIT.
@@ -101,6 +88,19 @@ ${
 //====
 ${manualImports.mkString("\n")}
 //====
+
+import a8.shared.Meta.{CaseClassParm, Generator, Constructors}
+${
+    caseClassGens
+      .flatMap(ccg =>
+        ccg
+          .templates
+          .flatMap(_.resolvedImports(ccg))
+      )
+      .toVector
+      .distinct
+      .mkString("\n")
+  }
 
 """
 
