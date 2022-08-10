@@ -38,7 +38,14 @@ object QueryDslGenerator {
     to: String,
   )
 
-  def generate(resolvedCaseClass: ResolvedCaseClass): String = {
+  def generate(resolvedCaseClass: ResolvedCaseClass): Option[String] =
+    resolvedCaseClass
+      .companionGen
+      .queryDsl
+      .getOrElse(true)
+      .option(generateImpl(resolvedCaseClass))
+
+  def generateImpl(resolvedCaseClass: ResolvedCaseClass): String = {
     import resolvedCaseClass.caseClass
     // get @Join annos
 
@@ -48,9 +55,9 @@ object QueryDslGenerator {
         .map { prop =>
           resolvedCaseClass.model.caseClassesByName.get(prop.typeName.fullName) match {
             case None =>
-              s"  val ${prop.nameAsVal} = querydslp.QueryDsl.field[${prop.typeName.fullName}](${prop.nameAsStringLit}, join)"
+              s"  val ${prop.nameAsVal} = jdbcf.querydsl.QueryDsl.field[${prop.typeName.fullName}](${prop.nameAsStringLit}, join)"
             case Some(cc) =>
-              s"""  val ${prop.nameAsVal} = new ${cc.name.value}.TableDsl(querydslp.QueryDsl.ComponentJoin(${prop.nameAsStringLit}, join))"""
+              s"""  val ${prop.nameAsVal} = new ${cc.name.value}.TableDsl(jdbcf.querydsl.QueryDsl.ComponentJoin(${prop.nameAsStringLit}, join))"""
           }
         }
         .mkString("\n")
@@ -71,7 +78,7 @@ object QueryDslGenerator {
         .map { joinAnno =>
 s"""
 lazy val ${joinAnno.name.stripQuotes}: ${joinAnno.to.stripQuotes}.TableDsl = {
-  val childJoin = querydslp.QueryDsl.createJoin(join, ${joinAnno.name}, queryDsl.tableDsl, join=>new ${joinAnno.to.stripQuotes}.TableDsl(join), ${joinAnno.to.stripQuotes}.jdbcMapper) { (from,to) =>
+  val childJoin = jdbcf.querydsl.QueryDsl.createJoin(join, ${joinAnno.name}, queryDsl.tableDsl, join=>new ${joinAnno.to.stripQuotes}.TableDsl(join), ${joinAnno.to.stripQuotes}.jdbcMapper) { (from,to) =>
     ${joinAnno.expr.stripQuotes}
   }
   new ${joinAnno.to.stripQuotes}.TableDsl(childJoin)
@@ -119,12 +126,12 @@ lazy val ${joinAnno.name.stripQuotes}: ${joinAnno.to.stripQuotes}.TableDsl = {
 
         //        val queryDsl = new QueryDsl[${caseClass.name.value}, TableDsl, ${caseClass.primaryKeyTypeName.getOrElse("Unit")}](jdbcMapper, new TableDsl)
 z"""
-val queryDsl = new querydslp.QueryDsl[${typeParameters}${keyParameter}](jdbcMapper, new TableDsl)
+val queryDsl = new jdbcf.querydsl.QueryDsl[${typeParameters}${keyParameter}](jdbcMapper, new TableDsl)
 
-def query${methodTypeParameters}(whereFn: TableDsl => querydslp.QueryDsl.Condition): querydslp.SelectQuery[${fParameter}${typeParameters}] =
+def query${methodTypeParameters}(whereFn: TableDsl => jdbcf.querydsl.QueryDsl.Condition): jdbcf.querydsl.SelectQuery[${fParameter}${typeParameters}] =
   queryDsl.query${fBracketParameter}(whereFn)
 
-def update${methodTypeParameters}(set: TableDsl => Iterable[querydslp.UpdateQuery.Assignment[_]]): querydslp.UpdateQuery[${fParameter}TableDsl] =
+def update${methodTypeParameters}(set: TableDsl => Iterable[jdbcf.querydsl.UpdateQuery.Assignment[_]]): jdbcf.querydsl.UpdateQuery[${fParameter}TableDsl] =
   queryDsl.update${fBracketParameter}(set)
 """
       } else {
@@ -133,13 +140,15 @@ def update${methodTypeParameters}(set: TableDsl => Iterable[querydslp.UpdateQuer
 
     val tableDslClassDefLine =
       if ( resolvedCaseClass.caseClass.hasSqlTable ) {
-        s"class TableDsl(join: querydslp.QueryDsl.Join = querydslp.QueryDsl.RootJoin) {"
+        s"class TableDsl(join: jdbcf.querydsl.QueryDsl.Join = jdbcf.querydsl.QueryDsl.RootJoin) {"
       } else {
-        s"class TableDsl(join: querydslp.QueryDsl.Path) extends querydslp.QueryDsl.Component[${caseClass.name.value}](join) {"
+        s"class TableDsl(join: jdbcf.querydsl.QueryDsl.Path) extends jdbcf.querydsl.QueryDsl.Component[${caseClass.name.value}](join) {"
       }
 
 
     s"""
+
+
 ${tableDslClassDefLine}
 ${fields}
 ${joins.indent("  ")}

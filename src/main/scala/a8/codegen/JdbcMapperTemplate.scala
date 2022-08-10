@@ -16,7 +16,7 @@ extends
     callBuilderOverrideMethod = false,
     staticImports =
       List(
-        "import a8.shared.jdbcf.{querydsl=>querydslp}",
+        "import a8.shared.jdbcf",
       )
   )
 {
@@ -49,7 +49,7 @@ extends
       case (None, Some(_)) =>
         s"a8.shared.jdbcf.mapper.TableMapper[${caseClass.name}]"
       case (Some(pkn), _) =>
-        s"a8.shared.jdbcf.mapper.KeyedTableMapper[${caseClass.name},${pkn}]"
+        s"a8.shared.jdbcf.mapper.KeyedTableMapper[${caseClass.name},(${pkn})]"
     }
   }
 
@@ -78,9 +78,9 @@ extends
           List(".buildMapper")
       }
 
-    val queryDsl = "\n\n" + QueryDslGenerator.generate(resolvedCaseClass)
+    val queryDsl = QueryDslGenerator.generate(resolvedCaseClass)
 
-    (base + (tableName ++ suffix).mkString("\n","\n","").indent("    ")).trim + queryDsl
+    (base + (tableName ++ suffix).mkString("\n","\n","").indent("    ")).trim + queryDsl.getOrElse("")
 
   }
 

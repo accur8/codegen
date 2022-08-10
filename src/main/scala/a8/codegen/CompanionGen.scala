@@ -40,6 +40,7 @@ object CompanionGen {
         jsonFormat = resolvedAnno.bool("jsonFormat").getOrElse(defaultCompanionGen.jsonFormat),
         rpcHandler = resolvedAnno.bool("rpcHandler").getOrElse(defaultCompanionGen.rpcHandler),
         jdbcMapper = resolvedAnno.bool("jdbcMapper").getOrElse(defaultCompanionGen.jdbcMapper),
+        queryDsl = resolvedAnno.bool("queryDsl").orElse(defaultCompanionGen.queryDsl),
         messagePack = resolvedAnno.bool("messagePack").getOrElse(defaultCompanionGen.messagePack),
         qubesMapper = resolvedAnno.bool("qubesMapper").getOrElse(defaultCompanionGen.qubesMapper),
         circeCodec = resolvedAnno.bool("circeCodec").getOrElse(defaultCompanionGen.circeCodec),
@@ -60,6 +61,7 @@ object CompanionGen {
       qubesMapper = false,
       circeCodec = false,
       jsonCodec = false,
+      queryDsl = None,
       zio = false,
     )
 
@@ -75,6 +77,7 @@ case class CompanionGen(
   jsonFormat: Boolean,
   rpcHandler: Boolean,
   jdbcMapper: Boolean,
+  queryDsl: Option[Boolean],
   messagePack: Boolean,
   qubesMapper: Boolean,
   circeCodec: Boolean,
