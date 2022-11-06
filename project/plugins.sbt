@@ -35,7 +35,7 @@ credentials += readRepoCredentials()
 
 // use this one if you need dobby
 //addSbtPlugin("a8" % "sbt-a8" % "1.1.0-20210702_1452")
-addSbtPlugin("a8" % "sbt-a8" % "1.1.0-20210930_1248")
+addSbtPlugin("io.accur8" % "sbt-a8" % "1.2.0-20220113_1040")
 
 // This plugin can be removed when using Scala 2.13.0 or above
 addSbtPlugin("org.lyranthe.sbt" % "partial-unification" % "1.1.2")

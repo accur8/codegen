@@ -19,31 +19,37 @@
 // 
 //      
 
+val appVersion = a8.sbt_a8.versionStamp(file("."))
 val scalaLibVersion = "2.13.6"
 
 scalacOptions in Global ++= Seq("-deprecation", "-unchecked", "-feature")
 
-resolvers in Global += "a8-repo" at Common.readRepoUrl()
+// for publishing to locus
+// resolvers in Global += "a8-repo" at Common.readRepoUrl()
+// publishTo in Global := Some("a8-repo-releases" at Common.readRepoUrl())
 
-publishTo in Global := Some("a8-repo-releases" at Common.readRepoUrl())
-//publishTo in Global := sonatypePublishToBundle.value
-//credentials in Global += Credentials(Path.userHome / ".sbt" / "sonatype.credentials")
+// for publishing to sonatype
+publishTo in Global := sonatypePublishToBundle.value
+credentials in Global += Credentials(Path.userHome / ".sbt" / "sonatype.credentials")
 
 scalaVersion in Global := scalaLibVersion
 
 organization in Global := "io.accur8"
 
-version in Global := a8.sbt_a8.versionStamp(file("."))
+version in Global := appVersion
 
 versionScheme in Global := Some("strict")
 
 serverConnectionType in Global := ConnectionType.Local
 
 
+// not sure what but wasn't publishing javadoc so forced the settings here
 lazy val codegen =
   Common
     .jvmProject("a8-codegen", file("."), "codegen")
     .settings(
+      Compile / packageDoc / publishArtifact := true,
+      packageDoc / publishArtifact := true,
       libraryDependencies ++= Seq(
         "org.typelevel" %% "cats-parse" % "0.3.4",
         "org.scalameta" %% "scalameta" % "4.4.25",
