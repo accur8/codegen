@@ -46,13 +46,23 @@ case class CodegenTemplate2(file: java.io.File, project: Project) extends Codege
 
   override val companionGenDefault: CompanionGen = CompanionGen.empty
 
-  val manualImports =
-    previousGeneratedSourceCode
-      .linesIterator
-      .toList
-      .dropWhile(!_.startsWith("//===="))
-      .drop(1)
-      .takeWhile(!_.startsWith("//===="))
+  val manualImports = {
+    val mi =
+      previousGeneratedSourceCode
+        .linesIterator
+        .toList
+        .dropWhile(!_.startsWith("//===="))
+        .drop(1)
+        .takeWhile(!_.startsWith("//===="))
+        .filter(_.trim.length > 0)
+
+    if ( mi.isEmpty ) {
+      List("import _root_.scala")
+    } else {
+      mi
+    }
+
+  }
 
   lazy val previousGeneratedSourceCode =
     if ( generatedFile.exists() ) {

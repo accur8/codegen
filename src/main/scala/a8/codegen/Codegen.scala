@@ -19,12 +19,39 @@ object Codegen extends IOApp {
 
   val maxConcurrent = 20
 
-  def isCodgenFile(p: Path): Boolean = {
+  sealed trait CodegenAction
+  case class RunCodegen(file: File) extends CodegenAction
+  case class CodeGenerated(file: File) extends CodegenAction with CodeGenResult
+
+  sealed trait CodeGenResult
+  case class CodeGenSuccess(sourceFile: File, generatedFile: File) extends CodeGenResult
+  case class CodeGenFailure(sourceFile: Option[File], failure: Throwable) extends CodeGenResult
+
+  def codegenAction(p: Path): Option[CodegenAction] = {
     val f = p.toFile
+    val name = f.getName
+    if ( f.isFile && name.endsWith(".scala") ) {
+      if ( name.startsWith("Mx") ) {
+        Some(CodeGenerated(f))
+      } else {
+        loadFileContents(f)
+          .exists { contents =>
+            contents.contains("@CompanionGen") && !contents.contains("//@NoCodegen")
+          }
+          .option(RunCodegen(f))
+      }
+    } else {
+      None
+    }
+  }
+
+  def isMxScalaFile(p: Path): Boolean = {
+    val f = p.toFile
+    val name = f.getName
     if (
       f.isFile
-        && f.getName.endsWith(".scala")
-        && !f.getName.startsWith("Mx")
+        && name.endsWith(".scala")
+        && name.startsWith("Mx")
     ) {
       loadFileContents(f)
         .exists { contents =>
@@ -70,25 +97,29 @@ object Codegen extends IOApp {
             //          f
             //        }
             //      }
-            .collect {
+            .parEvalMapUnordered(15) {
               case p if p.toFile.getName == "codegen.json" =>
-                loadCodegenJson(p.getParent.toFile, false)
+                IO(loadCodegenJson(p.getParent.toFile, false))
+              case _ =>
+                IO.none
             }
       }
     stream.flatMap(o => fs2.Stream.iterable(o))
   }
 
-  def findCodegenScalaFiles(dir: File): fs2.Stream[IO,Path] =
+  def findCodegenScalaFiles(dir: File): fs2.Stream[IO,CodegenAction] =
     fs2.io.file
       .Files[IO]
       .walk(dir.toPath)
       .parEvalMapUnordered(maxConcurrent) { p =>
         IO.blocking {
-          isCodgenFile(p) -> p
+          codegenAction(p)
         }
       }
-      .filter(_._1)
-      .map(_._2)
+      .collect {
+        case Some(ca) =>
+          ca
+      }
 
   def printHelp(args: Option[List[String]] = None): IO[ExitCode] = {
     IO.blocking {
@@ -137,10 +168,6 @@ object Codegen extends IOApp {
 
   }
 
-  sealed trait CodeGenResult
-  case class CodeGenSuccess(sourceFile: File, generatedFile: File) extends CodeGenResult
-  case class CodeGenFailure(sourceFile: Option[File], failure: Throwable) extends CodeGenResult
-
 
   def runCodeGen(dir: File): IO[ExitCode] =
     findProjectRoots(dir)
@@ -161,6 +188,31 @@ object Codegen extends IOApp {
       .compile
       .toList
       .flatMap { results =>
+
+        val generatedFiles =
+          results
+            .collect {
+              case cgs: Codegen.CodeGenSuccess =>
+                cgs.generatedFile
+            }
+            .toSet
+
+        val beforeGeneratedFiles =
+          results
+            .collect {
+              case CodeGenerated(f) =>
+                f
+            }
+            .toSet
+
+        // cleanup previously generated files that were not generated this run
+        beforeGeneratedFiles
+          .filterNot(generatedFiles.contains)
+          .foreach { obsoleteFile =>
+            println(s"cleaning up obsolete file ${obsoleteFile.getAbsolutePath}")
+            obsoleteFile.delete()
+          }
+
         val failures =
           results
             .collect {
@@ -190,8 +242,11 @@ object Codegen extends IOApp {
     println(s"processing scala files with @CompanionGen in ${project.searchRoot.getCanonicalPath} using config ${project.configFile.getCanonicalPath}")
 
     findCodegenScalaFiles(project.searchRoot)
-      .parEvalMapUnordered(maxConcurrent) { scalaFile =>
-        templateFactory(scalaFile.toFile, project).run()
+      .parEvalMapUnordered(maxConcurrent) {
+        case RunCodegen(f) =>
+          templateFactory(f, project).run()
+        case cg: CodeGenerated =>
+          IO(cg)
       }
 
   }
