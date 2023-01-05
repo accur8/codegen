@@ -17,19 +17,6 @@ case class CodegenTemplate1(file: java.io.File, project: Project)
 
   override val companionGenDefault: CompanionGen = CompanionGen.empty.copy(jsonFormat = true)
 
-  lazy val manualImports =
-    previousGeneratedSourceCode
-      .linesIterator
-      .toList
-      .dropWhile(!_.startsWith("//===="))
-      .drop(1)
-      .takeWhile(!_.startsWith("//===="))
-
-  lazy val previousGeneratedSourceCode = generatedFile.readTextOpt.getOrElse("")
-
-  lazy val generatedFile = new java.io.File(file.getParentFile, "Mx" + file.getName)
-
-
 //  val sourceCode = scala.io.Source.fromFile("model/shared/src/main/scala/a8/manna/model/Tester2.scala").mkString
   lazy val sourceCode = {
     val s = scala.io.Source.fromFile(file)

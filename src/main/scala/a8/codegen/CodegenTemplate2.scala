@@ -46,36 +46,6 @@ case class CodegenTemplate2(file: java.io.File, project: Project) extends Codege
 
   override val companionGenDefault: CompanionGen = CompanionGen.empty
 
-  val manualImports = {
-    val mi =
-      previousGeneratedSourceCode
-        .linesIterator
-        .toList
-        .dropWhile(!_.startsWith("//===="))
-        .drop(1)
-        .takeWhile(!_.startsWith("//===="))
-        .filter(_.trim.length > 0)
-
-    if ( mi.isEmpty ) {
-      List("import _root_.scala")
-    } else {
-      mi
-    }
-
-  }
-
-  lazy val previousGeneratedSourceCode =
-    if ( generatedFile.exists() ) {
-      val s = scala.io.Source.fromFile(generatedFile)
-      val gf = s.getLines().mkString("\n")
-      s.close()
-      gf
-    } else {
-      ""
-    }
-
-  lazy val generatedFile = new java.io.File(file.getParentFile, "Mx" + file.getName)
-
 
 //  val sourceCode = scala.io.Source.fromFile("model/shared/src/main/scala/a8/manna/model/Tester2.scala").mkString
   lazy val sourceCode = {
