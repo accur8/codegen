@@ -49,7 +49,7 @@ extends
       case (None, Some(_)) =>
         s"a8.shared.jdbcf.mapper.TableMapper[${caseClass.name}]"
       case (Some(pkn), _) =>
-        s"a8.shared.jdbcf.mapper.KeyedTableMapper[${caseClass.name},(${pkn})]"
+        s"a8.shared.jdbcf.mapper.KeyedTableMapper[${caseClass.name},${pkn}]"
     }
   }
 

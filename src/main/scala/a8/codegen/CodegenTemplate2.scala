@@ -20,11 +20,15 @@ object CodegenTemplate2 extends TemplateFactory with IOApp.Simple {
 //    Codegen.runCodeGen(new File("/Users/glen/code/customers/confidence/teamsync"))
 //      .void
 
+//    Codegen
+//      .runCodeGen(new File("/Users/glen/code/accur8/composite"))
+//      .void
+
     Codegen
-      .runCodeGen(new File("/Users/glen/code/accur8/composite"))
+      .runCodeGen(new File("/Users/glen/code/customers/ahs-zio"))
       .void
 
-//    Codegen.runCodeGen(new File("/Users/glen/code/accur8/composite/sync"))
+    //    Codegen.runCodeGen(new File("/Users/glen/code/accur8/composite/sync"))
 //      .void
 
 //    Codegen.runCodeGen(new File("/Users/glen/code/accur8/sync"))
