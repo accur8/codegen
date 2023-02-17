@@ -184,6 +184,15 @@ implicit val zioEq: zio.prelude.Equal[${caseClassName}] = zio.prelude.Equal.defa
     ""
   }
 }
+${
+  if (caseClass.companionGen.scala3) {
+    z"""
+given scala.CanEqual[${caseClassName}, ${caseClassName}] = scala.CanEqual.derived
+"""
+  } else {
+    ""
+  }
+}
 implicit val catsEq: cats.Eq[${caseClassName}] = cats.Eq.fromUniversalEquals
 
 lazy val generator: Generator[${caseClassName},parameters.type] =  {

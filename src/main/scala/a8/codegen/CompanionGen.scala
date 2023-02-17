@@ -46,6 +46,7 @@ object CompanionGen {
         circeCodec = resolvedAnno.bool("circeCodec").getOrElse(defaultCompanionGen.circeCodec),
         jsonCodec = resolvedAnno.bool("jsonCodec").getOrElse(defaultCompanionGen.jsonCodec),
         zio = resolvedAnno.bool("zio").getOrElse(defaultCompanionGen.zio),
+        scala3 = resolvedAnno.bool("scala3").getOrElse(defaultCompanionGen.scala3),
       )
     }
 
@@ -63,6 +64,7 @@ object CompanionGen {
       jsonCodec = false,
       queryDsl = None,
       zio = false,
+      scala3 = false,
     )
 
 }
@@ -83,5 +85,6 @@ case class CompanionGen(
   circeCodec: Boolean,
   jsonCodec: Boolean,
   zio: Boolean,
+  scala3: Boolean,
 )
 
