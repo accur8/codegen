@@ -172,7 +172,6 @@ ${
         .flatMap(_.build(caseClassGen))
         .mkString("\n\n")
 }${
-
       typePerKey
 }
 ${
@@ -193,7 +192,15 @@ given scala.CanEqual[${caseClassName}, ${caseClassName}] = scala.CanEqual.derive
     ""
   }
 }
+${
+  if (caseClass.companionGen.cats) {
+    z"""
 implicit val catsEq: cats.Eq[${caseClassName}] = cats.Eq.fromUniversalEquals
+"""
+  } else {
+    ""
+  }
+}
 
 lazy val generator: Generator[${caseClassName},parameters.type] =  {
   val constructors = Constructors[${caseClassName}](${props.size.toString}, unsafe.iterRawConstruct)

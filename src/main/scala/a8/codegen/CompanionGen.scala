@@ -47,6 +47,7 @@ object CompanionGen {
         jsonCodec = resolvedAnno.bool("jsonCodec").getOrElse(defaultCompanionGen.jsonCodec),
         zio = resolvedAnno.bool("zio").getOrElse(defaultCompanionGen.zio),
         scala3 = resolvedAnno.bool("scala3").getOrElse(defaultCompanionGen.scala3),
+        cats = resolvedAnno.bool("cats").getOrElse(defaultCompanionGen.cats),
       )
     }
 
@@ -65,6 +66,7 @@ object CompanionGen {
       queryDsl = None,
       zio = false,
       scala3 = false,
+      cats = false,
     )
 
 }
@@ -84,6 +86,7 @@ case class CompanionGen(
   qubesMapper: Boolean,
   circeCodec: Boolean,
   jsonCodec: Boolean,
+  cats: Boolean,
   zio: Boolean,
   scala3: Boolean,
 )
