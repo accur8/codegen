@@ -175,7 +175,7 @@ ${
       typePerKey
 }
 ${
-  if (caseClass.companionGen.zio) {
+  if (caseClass.companionGen.zio && !caseClass.companionGen.scala3) {
     z"""
 implicit val zioEq: zio.prelude.Equal[${caseClassName}] = zio.prelude.Equal.default
 """
