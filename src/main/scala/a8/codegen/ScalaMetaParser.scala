@@ -137,8 +137,8 @@ object ScalaMetaParser {
   def annotation(annot: Mod.Annot): Annotation = {
     annot
       .init
-      .argss
-      .flatten
+      .argClauses
+      .flatMap(_.values)
       .foldLeft(Annotation(annot.init.tpe.syntax)) { case (anno, term) =>
         term match {
           case Term.Assign(lhs, rhs) =>
@@ -163,7 +163,7 @@ object ScalaMetaParser {
     CaseClassDef(
       companionGenAnno(classDef),
       CaseClassName(classDef.name.value),
-      classDef.ctor.paramss.flatten.map(parmDef),
+      classDef.ctor.paramClauses.flatMap(_.values).map(parmDef),
       annotations(classDef.mods),
     )
   }
@@ -196,8 +196,8 @@ object ScalaMetaParser {
   def companionGenAnno(mod: scala.meta.Mod.Annot): Anno = {
     mod
       .init
-      .argss
-      .flatten
+      .argClauses
+      .flatMap(_.values)
       .foldLeft(Anno()) { case (anno, term) =>
         term match {
           case Term.Assign(lhs, rhs) =>
