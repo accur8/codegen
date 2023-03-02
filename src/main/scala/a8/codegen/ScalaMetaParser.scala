@@ -12,9 +12,16 @@ import scala.meta._
 
 object ScalaMetaParser {
 
-  def parseSourceFile(file: File, resolveCompanionGen: (CaseClassName, Anno)=>CompanionGen): CaseClassAst.SourceFile = {
+  def parseSourceFile(file: File, scala3: Boolean, resolveCompanionGen: (CaseClassName, Anno)=>CompanionGen): CaseClassAst.SourceFile = {
 
-    val source: Source = file.readText.parse[Source].get
+    val inputSourceCode: (Dialect, Input) = {
+      if ( scala3 )
+        dialects.Scala3(file.readText)
+      else
+        dialects.Scala213(file.readText)
+    }
+
+    val source: Source = inputSourceCode.parse[Source].get
 
     val allCaseClassDefs = visit(source)
 

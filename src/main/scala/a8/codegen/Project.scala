@@ -13,6 +13,7 @@ case class Project(
   searchRoot: java.io.File,
   configFile: java.io.File,
   config: ProjectConfig,
+  scala3: Boolean,
 ) {
 
   lazy val companionGenResolver = CompanionGen.resolver(this)

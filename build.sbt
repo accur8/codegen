@@ -52,7 +52,7 @@ lazy val codegen =
       packageDoc / publishArtifact := true,
       libraryDependencies ++= Seq(
         "org.typelevel" %% "cats-parse" % "0.3.4",
-        "org.scalameta" %% "scalameta" % "4.4.25",
+        "org.scalameta" %% "scalameta" % "4.7.5",
         "io.circe" %% "circe-core" % "0.14.1",
         "io.circe" %% "circe-generic" % "0.14.1",
         "io.circe" %% "circe-parser" % "0.14.1",

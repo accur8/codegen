@@ -73,7 +73,15 @@ object Codegen extends IOApp {
         case Left(th) =>
           throw new RuntimeException(s"error parsing ${codegenDotJsonFile} -- ${th.getMessage}")
         case Right(cfg) =>
-          Some(Project(ProjectRoot(dir), dir, codegenDotJsonFile, cfg))
+          val scala3 =
+            cfg
+              .defaults
+              .flatMap(_.anno.get("scala3"))
+              .filter(b => b)
+              .headOption
+              .nonEmpty
+          this.toString
+          Some(Project(ProjectRoot(dir), dir, codegenDotJsonFile, cfg, scala3))
       }
     } else if ( parent != null && searchParent ) {
       loadCodegenJson(parent, searchParent)

@@ -61,7 +61,7 @@ trait CodegenTemplate {
   }
   lazy val previousGeneratedSourceCode = generatedFile.readTextOpt.getOrElse("")
 
-  lazy val sourceFile: SourceFile = ScalaMetaParser.parseSourceFile(file, resolveCompanionGen)
+  lazy val sourceFile: SourceFile = ScalaMetaParser.parseSourceFile(file, project.scala3, resolveCompanionGen)
 
   def resolveCompanionGen(caseClassName: CaseClassName, sourceAnno: a8.codegen.ProjectConfig.Anno): CompanionGen =
     project
