@@ -12,13 +12,15 @@ import scala.meta._
 
 object ScalaMetaParser {
 
-  def parseSourceFile(file: File, scala3: Boolean, resolveCompanionGen: (CaseClassName, Anno)=>CompanionGen): CaseClassAst.SourceFile = {
+  def parseSourceFile(file: File, sourceContentOpt: Option[String], scala3: Boolean, resolveCompanionGen: (CaseClassName, Anno)=>CompanionGen): CaseClassAst.SourceFile = {
+
+    val sourceContent = sourceContentOpt.getOrElse(file.readText)
 
     val inputSourceCode: (Dialect, Input) = {
       if ( scala3 )
-        dialects.Scala3(file.readText)
+        dialects.Scala3(sourceContent)
       else
-        dialects.Scala213(file.readText)
+        dialects.Scala213(sourceContent)
     }
 
     val source: Source = inputSourceCode.parse[Source].get

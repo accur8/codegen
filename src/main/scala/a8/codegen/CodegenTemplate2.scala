@@ -177,7 +177,7 @@ ${
 ${
   if (caseClass.companionGen.zio && !caseClass.companionGen.scala3) {
     z"""
-implicit val zioEq: zio.prelude.Equal[${caseClassName}] = zio.prelude.Equal.default
+given zio.prelude.Equal[${caseClassName}] = zio.prelude.Equal.default
 """
   } else {
     ""
@@ -195,7 +195,7 @@ given scala.CanEqual[${caseClassName}, ${caseClassName}] = scala.CanEqual.derive
 ${
   if (caseClass.companionGen.cats) {
     z"""
-implicit val catsEq: cats.Eq[${caseClassName}] = cats.Eq.fromUniversalEquals
+given cats.Eq[${caseClassName}] = cats.Eq.fromUniversalEquals
 """
   } else {
     ""
@@ -218,7 +218,7 @@ lazy val typeName = "${caseClassName}"
 """
 
     lazy val body = s"""
-trait Mx${caseClassName} {
+trait Mx${caseClassName} { self: ${caseClassName}.type =>
 
 ${bareBody.trim.indent("  ")}
 

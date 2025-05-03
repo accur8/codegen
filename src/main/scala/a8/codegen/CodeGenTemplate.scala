@@ -2,13 +2,13 @@ package a8.codegen
 
 
 import java.io.File
-
 import CommonOpsCopy._
 import a8.codegen.CaseClassAst.{CaseClassName, SourceFile}
 import a8.codegen.Codegen.{CodeGenFailure, CodeGenResult, CodeGenSuccess}
 import a8.codegen.CompanionGen.CompanionGenResolver
 import cats.effect.IO
 import MoreOps._
+import a8.codegen.ProjectConfig.Anno
 
 import scala.util.control.NonFatal
 
@@ -36,6 +36,37 @@ trait CodegenTemplate {
   val generatedCaseClassCode: String
   val header: String
   val file: File
+  lazy val sourceContent = file.readText
+
+
+  lazy val codeGenAnno: Anno = {
+    val codeGenLine =
+      sourceContent
+        .linesIterator
+        .map(_.trim)
+        .filter(l => l.startsWith("@CodeGen(") || l.startsWith("//@CodeGen("))
+        .toList
+        .headOption
+        .getOrElse("")
+
+    val annoValues =
+      codeGenLine
+        .replaceAll("//@CodeGen\\(", "")
+        .replaceAll("@CodeGen\\(", "")
+        .replaceAll("\\)", "")
+        .splitList(",")
+        .map(_.splitList("=", 2))
+        .map {
+          case List(k,v @("true" | "false")) =>
+            k.trim -> v.toBoolean
+          case _ =>
+            sys.error("invalid @CodeGen annotation: " + codeGenLine)
+        }
+        .toMap
+
+    Anno(annoValues)
+
+  }
 
   lazy val generatedFile = new java.io.File(file.getParentFile, "Mx" + file.getName)
 
@@ -61,12 +92,12 @@ trait CodegenTemplate {
   }
   lazy val previousGeneratedSourceCode = generatedFile.readTextOpt.getOrElse("")
 
-  lazy val sourceFile: SourceFile = ScalaMetaParser.parseSourceFile(file, project.scala3, resolveCompanionGen)
+  lazy val sourceFile: SourceFile = ScalaMetaParser.parseSourceFile(file, Some(sourceContent), project.scala3, resolveCompanionGen)
 
   def resolveCompanionGen(caseClassName: CaseClassName, sourceAnno: a8.codegen.ProjectConfig.Anno): CompanionGen =
     project
       .companionGenResolver
-      .resolve(caseClassName, file, sourceAnno, companionGenDefault)
+      .resolve(caseClassName, file, sourceAnno, companionGenDefault, codeGenAnno)
 
   def run(): IO[CodeGenResult] = {
     IO.blocking {

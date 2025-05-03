@@ -11,7 +11,7 @@ object ScalaMetaPlay {
 
     val file: File = new File("C:\\Users\\glen\\code\\accur8\\composite\\remoteapi\\nefario\\src\\main\\scala\\a8\\nefario\\model\\Model.scala")
 
-    val result = ScalaMetaParser.parseSourceFile(file, scala3 = false, (_,_) => CompanionGen.empty)
+    val result = ScalaMetaParser.parseSourceFile(file, None, scala3 = false, (_,_) => CompanionGen.empty)
 
     result.toString
 

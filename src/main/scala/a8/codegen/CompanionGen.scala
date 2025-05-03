@@ -21,7 +21,7 @@ object CompanionGen {
 
     lazy val canonicalCodeRoot = codeRoot.dir.toFile.getCanonicalFile.toPath
 
-    def resolve(caseClassName: CaseClassName, file: java.io.File, annotations: Anno, defaultCompanionGen: CompanionGen): CompanionGen = {
+    def resolve(caseClassName: CaseClassName, file: java.io.File, companionGenAnno: Anno, defaultCompanionGen: CompanionGen, codegenAnno: Anno): CompanionGen = {
       val resolvedAnno =
         projectConfig
           .defaults
@@ -34,7 +34,8 @@ object CompanionGen {
               anno
             }
           }
-          .merge(annotations)
+          .merge(codegenAnno)
+          .merge(companionGenAnno)
       CompanionGen(
         writeNones = resolvedAnno.bool("writeNones").getOrElse(defaultCompanionGen.writeNones),
         jsonFormat = resolvedAnno.bool("jsonFormat").getOrElse(defaultCompanionGen.jsonFormat),

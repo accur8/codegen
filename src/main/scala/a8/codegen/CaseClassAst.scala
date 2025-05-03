@@ -13,7 +13,7 @@ object CaseClassAst {
 
   case class SourceFile(
     pakkage: PackageName,
-    caseClasses: Iterable[CaseClass]
+    caseClasses: Iterable[CaseClass],
   ) {
     lazy val caseClassesByName =
       caseClasses
