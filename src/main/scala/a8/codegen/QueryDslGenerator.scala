@@ -119,10 +119,10 @@ lazy val ${joinAnno.name.stripQuotes}: ${joinAnno.to.stripQuotes}.TableDsl = {
         }
 
         val methodTypeParameters =
-          if ( resolvedCaseClass.companionGen.zio )
-            ""
-          else
+          if ( resolvedCaseClass.companionGen.cats )
             s"[F[_]: Async]"
+          else
+            ""
 
         //        val queryDsl = new QueryDsl[${caseClass.name.value}, TableDsl, ${caseClass.primaryKeyTypeName.getOrElse("Unit")}](jdbcMapper, new TableDsl)
 z"""
@@ -131,7 +131,7 @@ val queryDsl = new jdbcf.querydsl.QueryDsl[${typeParameters}${keyParameter}](jdb
 def query${methodTypeParameters}(whereFn: TableDsl => jdbcf.querydsl.QueryDsl.Condition): jdbcf.querydsl.SelectQuery[${fParameter}${typeParameters}] =
   queryDsl.query${fBracketParameter}(whereFn)
 
-def update${methodTypeParameters}(set: TableDsl => Iterable[jdbcf.querydsl.UpdateQuery.Assignment[_]]): jdbcf.querydsl.UpdateQuery[${fParameter}TableDsl] =
+def update${methodTypeParameters}(set: TableDsl => Iterable[jdbcf.querydsl.UpdateQuery.Assignment[?]]): jdbcf.querydsl.UpdateQuery[${fParameter}TableDsl] =
   queryDsl.update${fBracketParameter}(set)
 """
       } else {
