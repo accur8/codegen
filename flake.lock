@@ -68,14 +68,17 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1759543018,
-        "narHash": "sha256-z+M0dAdpbyYQ1cWRHl1oTyYnP1vVnQIfTsXLX5eykwg=",
-        "path": "/Users/glen/code/accur8/nix-pins",
-        "type": "path"
+        "lastModified": 1759543009,
+        "narHash": "sha256-BSE877Mycj0NPmIq7laSBlOe5aOQZhGUvD337JVr1Ac=",
+        "ref": "refs/heads/main",
+        "rev": "e66a2ad96dc95d79d7c6c6907a480ad18aa5406d",
+        "revCount": 37,
+        "type": "git",
+        "url": "ssh://git@git.accur8.net/a8/nix-pins"
       },
       "original": {
-        "path": "/Users/glen/code/accur8/nix-pins",
-        "type": "path"
+        "type": "git",
+        "url": "ssh://git@git.accur8.net/a8/nix-pins"
       }
     },
     "nixpkgs": {
@@ -96,11 +99,7 @@
     },
     "root": {
       "inputs": {
-        "nix-pins": "nix-pins",
-        "nixpkgs": [
-          "nix-pins",
-          "nixpkgs"
-        ]
+        "nix-pins": "nix-pins"
       }
     },
     "systems": {

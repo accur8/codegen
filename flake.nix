@@ -2,10 +2,7 @@
   description = "codegen project";
 
   inputs = {
-    # Using local path for testing new composable shells
-    nix-pins.url = "path:/Users/glen/code/accur8/nix-pins";
-    # When ready, switch back to: "git+ssh://git@git.accur8.net/a8/nix-pins";
-    nixpkgs.follows = "nix-pins/nixpkgs";
+    nix-pins.url = "git+ssh://git@git.accur8.net/a8/nix-pins";
   };
 
   outputs = { self, nix-pins, ... }:
