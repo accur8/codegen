@@ -68,41 +68,34 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1759109308,
-        "narHash": "sha256-ifoenf4FOH4o1IZMzQIJjOj4fKac4E2bHABK2Tq23tM=",
-        "ref": "refs/heads/main",
-        "rev": "a6002a2f6f6947c48ba42ded3393e9f4521ba3c6",
-        "revCount": 29,
-        "type": "git",
-        "url": "ssh://git@git.accur8.net/a8/nix-pins"
+        "lastModified": 1759543018,
+        "narHash": "sha256-z+M0dAdpbyYQ1cWRHl1oTyYnP1vVnQIfTsXLX5eykwg=",
+        "path": "/Users/glen/code/accur8/nix-pins",
+        "type": "path"
       },
       "original": {
-        "type": "git",
-        "url": "ssh://git@git.accur8.net/a8/nix-pins"
+        "path": "/Users/glen/code/accur8/nix-pins",
+        "type": "path"
       }
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1758690382,
-        "narHash": "sha256-NY3kSorgqE5LMm1LqNwGne3ZLMF2/ILgLpFr1fS4X3o=",
+        "lastModified": 1759417375,
+        "narHash": "sha256-O7eHcgkQXJNygY6AypkF9tFhsoDQjpNEojw3eFs73Ow=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "e643668fd71b949c53f8626614b21ff71a07379d",
+        "rev": "dc704e6102e76aad573f63b74c742cd96f8f1e6c",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
-        "ref": "nixos-unstable",
+        "ref": "nixpkgs-unstable",
         "repo": "nixpkgs",
         "type": "github"
       }
     },
     "root": {
       "inputs": {
-        "devshell": [
-          "nix-pins",
-          "devshell"
-        ],
         "nix-pins": "nix-pins",
         "nixpkgs": [
           "nix-pins",
