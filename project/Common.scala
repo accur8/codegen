@@ -28,6 +28,15 @@ import sbtcrossproject.CrossType
 
 object Common extends a8.sbt_a8.SharedSettings with a8.sbt_a8.HaxeSettings with a8.sbt_a8.SassSettings with a8.sbt_a8.dobby.DobbySettings {
 
+  lazy val generateFullDependencies = settingKey[Boolean]("Generate full-dependencies.json with detailed artifact information")
+
+  override def settings: Seq[Def.Setting[_]] =
+    super.settings ++
+    DependenciesJson.dependencyResourceSettings(generateFullDependencies, repoConfigFile, readRepoUrl()) ++
+    Seq(
+      generateFullDependencies := false  // Default to false to avoid inflating every jar
+    )
+
   def crossProject(artifactName: String, dir: java.io.File, id: String) =
     sbtcrossproject.CrossProject(id, dir)(JSPlatform, JVMPlatform)
       .crossType(CrossType.Full)

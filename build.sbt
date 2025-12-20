@@ -48,6 +48,7 @@ lazy val codegen =
   Common
     .jvmProject("a8-codegen", file("."), "codegen")
     .settings(
+      Common.generateFullDependencies := true,
       Compile / packageDoc / publishArtifact := true,
       packageDoc / publishArtifact := true,
       libraryDependencies ++= Seq(
