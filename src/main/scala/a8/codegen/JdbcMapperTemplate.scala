@@ -22,11 +22,11 @@ extends
 {
 
   override def resolvedImports(caseClassGen: ResolvedCaseClass): Iterable[String] = {
-    val asyncImport =
-      if ( !caseClassGen.companionGen.zio )
-        List("import cats.effect.Async")
-      else
-        Nil
+    val asyncImport = Nil
+//      if ( !caseClassGen.companionGen.zio )
+//        List("import cats.effect.Async")
+//      else
+//       Nil
     asyncImport ++ staticImports
   }
 
