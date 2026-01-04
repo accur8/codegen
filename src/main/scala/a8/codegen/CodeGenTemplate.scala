@@ -20,6 +20,8 @@ object CodegenTemplate {
         CodegenTemplate1
       case "template2" =>
         CodegenTemplate2
+      case "template3" | "scala3" =>
+        scala3.CodegenTemplate3
     }
 
   trait TemplateFactory {

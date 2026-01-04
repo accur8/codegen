@@ -1,25 +1,24 @@
-package a8.codegen
+package a8.codegen.scala3
 
 
 import a8.codegen.CaseClassAst.CaseClass
-import CommonOpsCopy._
-import MoreOps._
+import a8.codegen.CommonOpsCopy._
+import a8.codegen.ResolvedCaseClass
+import a8.codegen.MoreOps._
 
-object QueryDslGenerator {
+object QueryDslGenerator3 {
 
 /*
 
-    class TableDsl(join: Join = QueryDsl.RootJoin) {
+    class TableDsl(join: Join = QueryDsl.RootJoin):
       val id = QueryDsl.field[String]("id", join)
       val name = QueryDsl.field[String]("name", join)
       val containerId = QueryDsl.field[String]("containerId", join)
-      lazy val container: Container.TableDsl = {
+      lazy val container: Container.TableDsl =
         val childJoin = QueryDsl.createJoin(join, "container", queryDsl.tableDsl, ()=>container, Container.jdbcMapper) { (from,to) =>
           from.containerId === to.id
         }
         new Container.TableDsl(childJoin)
-      }
-    }
 
     val queryDsl = new QueryDsl[Widget, TableDsl](jdbcMapper, new TableDsl)
 
@@ -76,33 +75,31 @@ object QueryDslGenerator {
         }
         .map { joinAnno =>
 s"""
-lazy val ${joinAnno.name.stripQuotes}: ${joinAnno.to.stripQuotes}.TableDsl = {
-  val childJoin = jdbcf.querydsl.QueryDsl.createJoin(join, ${joinAnno.name}, queryDsl.tableDsl, join=>new ${joinAnno.to.stripQuotes}.TableDsl(join), ${joinAnno.to.stripQuotes}.jdbcMapper) { (from,to) =>
+lazy val ${joinAnno.name.stripQuotes}: ${joinAnno.to.stripQuotes}.TableDsl =
+  val childJoin = jdbcf.querydsl.QueryDsl.createJoin(join, ${joinAnno.name}, queryDsl.tableDsl, join=>new ${joinAnno.to.stripQuotes}.TableDsl(join), ${joinAnno.to.stripQuotes}.jdbcMapper): (from,to) =>
     ${joinAnno.expr.stripQuotes}
-  }
   new ${joinAnno.to.stripQuotes}.TableDsl(childJoin)
-}
 """
         }
         .mkString("\n")
 
     val queryMethods =
-      if ( resolvedCaseClass.caseClass.hasSqlTable ) {
+      if (resolvedCaseClass.caseClass.hasSqlTable) {
 
         val fParameter =
-          if ( resolvedCaseClass.companionGen.zio )
+          if (resolvedCaseClass.companionGen.zio)
             ""
           else
             "F, "
 
         val fBracketParameter =
-          if ( resolvedCaseClass.companionGen.zio )
+          if (resolvedCaseClass.companionGen.zio)
             ""
           else
             "[F]"
 
         val typeParameters =
-          if ( resolvedCaseClass.companionGen.zio )
+          if (resolvedCaseClass.companionGen.zio)
             s"${caseClass.name.value}, TableDsl"
           else
             s"${caseClass.name.value}, TableDsl"
@@ -118,7 +115,7 @@ lazy val ${joinAnno.name.stripQuotes}: ${joinAnno.to.stripQuotes}.TableDsl = {
         }
 
         val methodTypeParameters =
-          if ( resolvedCaseClass.companionGen.cats )
+          if (resolvedCaseClass.companionGen.cats)
             s"[F[_]: Async]"
           else
             ""
@@ -138,10 +135,10 @@ def update${methodTypeParameters}(set: TableDsl => Iterable[jdbcf.querydsl.Updat
       }
 
     val tableDslClassDefLine =
-      if ( resolvedCaseClass.caseClass.hasSqlTable ) {
-        s"class TableDsl(join: jdbcf.querydsl.QueryDsl.Join = jdbcf.querydsl.QueryDsl.RootJoin) {"
+      if (resolvedCaseClass.caseClass.hasSqlTable) {
+        s"class TableDsl(join: jdbcf.querydsl.QueryDsl.Join = jdbcf.querydsl.QueryDsl.RootJoin):"
       } else {
-        s"class TableDsl(join: jdbcf.querydsl.QueryDsl.Path) extends jdbcf.querydsl.QueryDsl.Component[${caseClass.name.value}](join) {"
+        s"class TableDsl(join: jdbcf.querydsl.QueryDsl.Path) extends jdbcf.querydsl.QueryDsl.Component[${caseClass.name.value}](join):"
       }
 
 
@@ -151,7 +148,6 @@ def update${methodTypeParameters}(set: TableDsl => Iterable[jdbcf.querydsl.Updat
 ${tableDslClassDefLine}
 ${fields}
 ${joins.indent("  ")}
-}
 ${queryMethods}
 """
 

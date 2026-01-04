@@ -139,11 +139,11 @@ object Codegen extends IOApp {
       val help =
         s"""Accur8 Codegen Tool
            |
-           |Usage: a8-codegen [ --help | --l-help | template1 | template2 ]
+           |Usage: a8-codegen [ --help | --l-help | [directory...] ]
            |
-           |Finds scala files in current directory with @CompanionGen and generates companion case classes
+           |Finds scala files with @CompanionGen and generates companion case classes
            |
-           |  templateName
+           |  directory   one or more directories to process (defaults to current directory)
            |
            |  --help      shows help for a8-codegen
            |
@@ -170,6 +170,12 @@ object Codegen extends IOApp {
         IO.blocking(
           "a8-codegen --l-help"!
         ).as(ExitCode.Success)
+      case dirs if dirs.forall(!_.startsWith("--")) =>
+        // Run codegen on each specified directory
+        dirs
+          .map(new File(_))
+          .traverse_(runCodeGen)
+          .as(ExitCode.Success)
       case _ =>
         printHelp(Some(args))
     }

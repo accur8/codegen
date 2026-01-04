@@ -1,11 +1,13 @@
-package a8.codegen
+package a8.codegen.scala3
 
 
 import a8.codegen.CaseClassAst.{CaseClass, TypeName}
-import CommonOpsCopy._
+import a8.codegen.ResolvedCaseClass
+import a8.codegen.CommonOpsCopy._
+import a8.codegen.BuilderTemplate
 
 object
-  JdbcMapperTemplate
+  Scala3JdbcMapperTemplate
 extends
   BuilderTemplate(
     "jdbcMapper",
@@ -77,7 +79,7 @@ extends
           List(".buildMapper")
       }
 
-    val queryDsl = QueryDslGenerator.generate(resolvedCaseClass)
+    val queryDsl = QueryDslGenerator3.generate(resolvedCaseClass)
 
     (base + (tableName ++ suffix).mkString("\n","\n","").indent("    ")).trim + queryDsl.getOrElse("")
 

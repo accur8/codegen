@@ -1,16 +1,19 @@
-package a8.codegen
+package a8.codegen.scala3
 
 
 import a8.codegen.CaseClassAst.{CaseClass, SourceFile}
 import a8.codegen.CodegenTemplate.TemplateFactory
 import a8.codegen.CommonOpsCopy._
+import a8.codegen.Codegen.{CodeGenFailure, CodeGenResult, CodeGenSuccess}
+import a8.codegen.{CaseClassAst, Codegen, CodegenTemplate, CompanionGen, Project, ResolvedCaseClass, ScalaMetaParser}
 import cats.effect.{IO, IOApp}
 
 import java.io.File
 import scala.language.postfixOps
-import MoreOps._
+import a8.codegen.MoreOps._
+import scala.util.control.NonFatal
 
-object CodegenTemplate2 extends TemplateFactory with IOApp.Simple {
+object CodegenTemplate3 extends TemplateFactory with IOApp.Simple {
 
 
   override def run: IO[Unit] = {
@@ -36,13 +39,13 @@ object CodegenTemplate2 extends TemplateFactory with IOApp.Simple {
 //    Codegen.codeGenScalaFiles(ProjectRoot("/Users/glen/code/accur8/composite/wsjdbc"))
   }
 
-
 }
 
 
-case class CodegenTemplate2(file: java.io.File, project: Project) extends CodegenTemplate {
+case class CodegenTemplate3(file: java.io.File, project: Project) extends CodegenTemplate {
 
-  override val companionGenDefault: CompanionGen = CompanionGen.empty
+  // template3 always forces scala3=true since indentation syntax requires Scala 3
+  override val companionGenDefault: CompanionGen = CompanionGen.empty.copy(scala3 = true)
 
 
 //  val sourceCode = scala.io.Source.fromFile("model/shared/src/main/scala/a8/manna/model/Tester2.scala").mkString
@@ -52,6 +55,12 @@ case class CodegenTemplate2(file: java.io.File, project: Project) extends Codege
     s.close()
     sc
   }
+
+  // template3 always uses Scala 3, no validation needed since we force it
+  // (indentation syntax requires Scala 3)
+
+  // Override sourceFile to always use Scala 3 dialect
+  override lazy val sourceFile: SourceFile = ScalaMetaParser.parseSourceFile(file, Some(sourceContent), scala3 = true, resolveCompanionGen)
 
   lazy val header = s"""package ${sourceFile.pakkage}
 
@@ -85,7 +94,7 @@ ${
   case class CaseClassGen(caseClass: CaseClass, model: SourceFile) extends ResolvedCaseClass { caseClassGen =>
 
     lazy val templates =
-      BuilderTemplate
+      Scala3BuilderTemplate
         .templates
         .filter(_.generateFor(caseClass.companionGen))
 
@@ -101,9 +110,9 @@ ${
 
     lazy val unsafeBody: String =
       s"""
-object unsafe {
+object unsafe:
 
-  def rawConstruct(values: IndexedSeq[Any]): ${caseClassName} = {
+  def rawConstruct(values: IndexedSeq[Any]): ${caseClassName} =
     ${caseClassName}(
 ${
         props
@@ -115,8 +124,8 @@ ${
           .indent("      ")
 }
     )
-  }
-  def iterRawConstruct(values: Iterator[Any]): ${caseClassName} = {
+
+  def iterRawConstruct(values: Iterator[Any]): ${caseClassName} =
     val value =
       ${caseClassName}(
 ${
@@ -128,14 +137,13 @@ ${
           .indent("        ")
 }
       )
-    if ( values.hasNext )
-       sys.error("")
+    if values.hasNext then
+      sys.error("")
     value
-  }
+
   def typedConstruct(${props.map(p => s"${p.nameAsVal}: ${p.typeName}").mkString(", ")}): ${caseClassName} =
     ${caseClassName}(${props.map(_.nameAsVal).mkString(", ")})
 
-}
 """
 
     lazy val typePerKey = {
@@ -169,7 +177,7 @@ ${
       typePerKey
 }
 ${
-  if (caseClass.companionGen.zio && !caseClass.companionGen.scala3) {
+  if (caseClass.companionGen.zio) {
     z"""
 given zio.prelude.Equal[${caseClassName}] = zio.prelude.Equal.default
 """
@@ -177,15 +185,9 @@ given zio.prelude.Equal[${caseClassName}] = zio.prelude.Equal.default
     ""
   }
 }
-${
-  if (caseClass.companionGen.scala3) {
-    z"""
+
 given scala.CanEqual[${caseClassName}, ${caseClassName}] = scala.CanEqual.derived
-"""
-  } else {
-    ""
-  }
-}
+
 ${
   if (caseClass.companionGen.cats) {
     z"""
@@ -196,14 +198,12 @@ given cats.Eq[${caseClassName}] = cats.Eq.fromUniversalEquals
   }
 }
 
-lazy val generator: Generator[${caseClassName},parameters.type] =  {
+lazy val generator: Generator[${caseClassName},parameters.type] =
   val constructors = Constructors[${caseClassName}](${props.size.toString}, unsafe.iterRawConstruct)
   Generator(constructors, parameters)
-}
 
-object parameters {
+object parameters:
 ${parametersBody.indent("  ")}
-}
 
 ${unsafeBody}
 
@@ -212,11 +212,10 @@ lazy val typeName = "${caseClassName}"
 """
 
     lazy val body = s"""
-trait Mx${caseClassName} { self: ${caseClassName}.type =>
+trait Mx${caseClassName}:
+  self: ${caseClassName}.type =>
 
 ${bareBody.trim.indent("  ")}
-
-}
 """
 
   }
@@ -230,5 +229,23 @@ ${bareBody.trim.indent("  ")}
     caseClassGens
       .map(_.body)
       .mkString("\n\n\n")
+
+  override def run(): IO[CodeGenResult] = {
+    IO.blocking {
+      try {
+        val objectName: String = "Mx" + file.getName.split("\\.").take(1).head
+        val generatedFile = new java.io.File(file.getParentFile, "Mx" + file.getName)
+        Codegen.printToFile(generatedFile) { out =>
+          out.println(header)
+          out.println(s"object ${objectName}:")
+          out.println(generatedCaseClassCode.indent("  "))
+        }
+        CodeGenSuccess(file, generatedFile)
+      } catch {
+        case NonFatal(th) =>
+          CodeGenFailure(Some(file), th)
+      }
+    }
+  }
 
 }

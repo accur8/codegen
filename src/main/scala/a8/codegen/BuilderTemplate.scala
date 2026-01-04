@@ -1,9 +1,14 @@
 package a8.codegen
 
 
-import a8.codegen.CaseClassAst.{Annotation, CaseClass, Property, TypeName}
+import a8.codegen.CaseClassAst.{Annotation, CaseClass, SourceFile, Property, TypeName}
 import CommonOpsCopy._
-import a8.codegen.CodegenTemplate2.ResolvedCaseClass
+
+trait ResolvedCaseClass {
+  val caseClass: CaseClass
+  val model: SourceFile
+  def companionGen = caseClass.companionGen
+}
 
 object BuilderTemplate {
 

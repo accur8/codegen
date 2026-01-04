@@ -1,10 +1,12 @@
-package a8.codegen
+package a8.codegen.scala3
 
 import a8.codegen.CaseClassAst.{CaseClass, TypeName}
-import CommonOpsCopy._
+import a8.codegen.ResolvedCaseClass
+import a8.codegen.CommonOpsCopy._
+import a8.codegen.BuilderTemplate
 
 object
-  QubesMapperTemplate
+  Scala3QubesMapperTemplate
 extends
   BuilderTemplate(
     "qubesMapper",
