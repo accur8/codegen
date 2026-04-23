@@ -66,7 +66,10 @@ case class CodegenTemplate3(file: java.io.File, project: Project) extends Codege
 
 /**
 
-  WARNING THIS IS GENERATED CODE.  DO NOT EDIT.
+  THIS FILE IS ENTIRELY GENERATED CODE -- DO NOT EDIT
+  It will be overwritten the next time code generation runs.
+
+  To regenerate, run `a8-codegen` from the project root.
 
   The only manually maintained code is the code between the //==== (normally where you add your imports)
 
